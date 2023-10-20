@@ -1,4 +1,5 @@
-from fastapi import FastAPI, Request, Form
+from fastapi import FastAPI, Request
+from fastapi import Form
 from fastapi.templating import Jinja2Templates
 from fastapi.responses import HTMLResponse, JSONResponse
 import uvicorn
@@ -13,7 +14,7 @@ voluntarios_db = []
 programas_db = []
 
 # Ruta para mostrar la página principal
-@app.post("/", response_class=HTMLResponse)
+@app.get("/", response_class=HTMLResponse)
 async def index(request: Request):
     print('Request for index page received')
     return templates.TemplateResponse('Home.html', {"request": request})
@@ -25,10 +26,17 @@ async def voluntario(request: Request):
 
 # Ruta para registrar un voluntario
 @app.post('/create-voluntario', response_class=JSONResponse)
-async def add_voluntario(ID: int, Nombre: str, Apellido: str,Telefono: int, Intereses: str):
+async def add_voluntario(ID: str = Form(...), Nombre: str = Form(...), Apellido: str = Form(...), Telefono: str = Form(...), Intereses: str = Form(...)):
+    nuevo_voluntario = {
+        'ID': ID,
+        'Nombre': Nombre,
+        'Apellido': Apellido,
+        'Telefono': Telefono,
+        'Intereses': Intereses
+    }
 
     voluntarios_db.append(nuevo_voluntario)
-    return {"mensaje": "Voluntario agregado con éxito", "ID": ID, "Nombre":Nombre, "Apellido":Apellido, "Telefono":Telefono, "interese":Intereses}
+    return {"mensaje": "Voluntario agregado con éxito", "nuevo_voluntario": nuevo_voluntario}
 
 # Ruta para eliminar voluntario por ID
 @app.get('/eliminar-voluntario', response_class=HTMLResponse)
