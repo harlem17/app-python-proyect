@@ -24,7 +24,7 @@ async def voluntario(request: Request):
     return templates.TemplateResponse('FormularioVoluntario.html', {"request": request})
 
 # Ruta para registrar un voluntario
-@app.get('/create-voluntario', response_class=JSONResponse)
+@app.post('/create-voluntario', response_class=JSONResponse)
 async def add_voluntario(ID: int, Nombre: str, Apellido: str,Telefono: int, Intereses: str):
 
     voluntarios_db.append(nuevo_voluntario)
