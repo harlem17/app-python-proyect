@@ -87,7 +87,7 @@ async def mostrar_programas():
 
 # Ruta para que los voluntarios se unan a un programa
 @app.post('/unirse-programa', response_class=JSONResponse)
-async def unirse_programa(nombre_programa: str = Form(...), voluntario_id: str = Form(...)):
+async def unirse_programa(nombre_programa: str = Form(...), voluntario_id: int = Form(...)):
     programa_encontrado = next((programa for programa in programas_db if programa['nombre'] == nombre_programa), None)
     voluntario_encontrado = next((voluntario for voluntario in voluntarios_db if voluntario['ID'] == voluntario_id), None)
 
