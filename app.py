@@ -20,9 +20,9 @@ async def index(request: Request):
     return templates.TemplateResponse('Home.html', {"request": request})
 
 # Ruta para mostrar formulario de registro de voluntario
-@app.get('/register-voluntario', response_class=HTMLResponse)
-async def voluntario(request: Request):
-    return templates.TemplateResponse('FormularioVoluntario.html', {"request": request})
+#@app.get('/register-voluntario', response_class=HTMLResponse)
+#async def voluntario(request: Request):
+ #   return templates.TemplateResponse('FormularioVoluntario.html', {"request": request})
 
 # Ruta para registrar un voluntario
 @app.post('/create-voluntario', response_class=JSONResponse)
@@ -40,13 +40,13 @@ async def add_voluntario(ID: int = Form(...), Nombre: str = Form(...), Apellido:
     return{ID:ID,Nombre:Nombre,Apellido:Apellido,Telefono:Telefono,Intereses:Intereses}
 
 # Ruta para eliminar voluntario por ID
-@app.get('/eliminar-voluntario', response_class=HTMLResponse)
-async def form_delete_voluntario(request: Request):
-    return templates.TemplateResponse('FormDeleteVoluntario.html', {"request": request})
+#@app.get('/eliminar-voluntario', response_class=HTMLResponse)
+#async def form_delete_voluntario(request: Request):
+ #   return templates.TemplateResponse('FormDeleteVoluntario.html', {"request": request})
 
 # Ruta para eliminar voluntario por ID
 @app.post('/eliminar-voluntario', response_class=JSONResponse)
-async def delete_voluntario(ID: str = Form(...)):
+async def delete_voluntario(ID: int = Form(...)):
     for voluntario in voluntarios_db:
         if voluntario['ID'] == ID:
             voluntarios_db.remove(voluntario)
@@ -59,9 +59,9 @@ async def mostrar_voluntarios():
     return {"voluntarios": voluntarios_db}
 
 # Ruta para mostrar formulario de registro de programa
-@app.get('/register-programa', response_class=HTMLResponse)
-async def programa(request: Request):
-    return templates.TemplateResponse('FormularioPrograma.html', {"request": request})
+#@app.get('/register-programa', response_class=HTMLResponse)
+#async def programa(request: Request):
+ #   return templates.TemplateResponse('FormularioPrograma.html', {"request": request})
 
 # Ruta para registrar un programa
 @app.post('/create-programa', response_class=JSONResponse)
@@ -81,9 +81,9 @@ async def mostrar_programas():
     return {"programas": programas_db}
 
 # Ruta para mostrar formulario de registro en programa
-@app.get('/asignar-programa', response_class=HTMLResponse)
-async def AsignarPrograma(request: Request):
-    return templates.TemplateResponse('AsignarPrograma.html', {"request": request})
+#@app.get('/asignar-programa', response_class=HTMLResponse)
+#async def AsignarPrograma(request: Request):
+ #   return templates.TemplateResponse('AsignarPrograma.html', {"request": request})
 
 # Ruta para que los voluntarios se unan a un programa
 @app.post('/unirse-programa', response_class=JSONResponse)
