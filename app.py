@@ -1,12 +1,28 @@
-from fastapi import FastAPI, Form, JSONResponse
+from fastapi import FastAPI, Request
+from fastapi import Form
+from fastapi.templating import Jinja2Templates
+from fastapi.responses import HTMLResponse, JSONResponse
+import uvicorn
 
 app = FastAPI()
+templates = Jinja2Templates(directory="templates")
 
 # Lista para almacenar voluntarios (simulación de una base de datos)
 voluntarios_db = []
 
 # Lista para almacenar programas
 programas_db = []
+
+# Ruta para mostrar la página principal
+@app.get("/", response_class=HTMLResponse)
+async def index(request: Request):
+    print('Request for index page received')
+    return templates.TemplateResponse('Home.html', {"request": request})
+
+# Ruta para mostrar formulario de registro de voluntario
+@app.get('/register-voluntario', response_class=HTMLResponse)
+async def voluntario(request: Request):
+    return templates.TemplateResponse('FormularioVoluntario.html', {"request": request})
 
 # Ruta para registrar un voluntario
 @app.post('/create-voluntario', response_class=JSONResponse)
@@ -20,7 +36,13 @@ async def add_voluntario(ID: int = Form(...), Nombre: str = Form(...), Apellido:
     }
 
     voluntarios_db.append(nuevo_voluntario)
-    return {"mensaje": "Voluntario agregado con éxito", "nuevo_voluntario": nuevo_voluntario}
+    print('mensaje": "Voluntario agregado con éxito", "nuevo_voluntario": nuevo_voluntario')
+    return{ID:ID,Nombre:Nombre,Apellido:Apellido,Telefono:Telefono,Intereses:Intereses}
+
+# Ruta para eliminar voluntario por ID
+@app.get('/eliminar-voluntario', response_class=HTMLResponse)
+async def form_delete_voluntario(request: Request):
+    return templates.TemplateResponse('FormDeleteVoluntario.html', {"request": request})
 
 # Ruta para eliminar voluntario por ID
 @app.post('/eliminar-voluntario', response_class=JSONResponse)
@@ -30,6 +52,16 @@ async def delete_voluntario(ID: str = Form(...)):
             voluntarios_db.remove(voluntario)
             return {"mensaje": "Voluntario eliminado con éxito"}
     return {"mensaje": "Voluntario no encontrado"}
+
+# Ruta para mostrar todos los voluntarios
+@app.get('/voluntarios', response_class=JSONResponse)
+async def mostrar_voluntarios():
+    return {"voluntarios": voluntarios_db}
+
+# Ruta para mostrar formulario de registro de programa
+@app.get('/register-programa', response_class=HTMLResponse)
+async def programa(request: Request):
+    return templates.TemplateResponse('FormularioPrograma.html', {"request": request})
 
 # Ruta para registrar un programa
 @app.post('/create-programa', response_class=JSONResponse)
@@ -43,6 +75,16 @@ async def add_programa(nombre: str = Form(...), descripcion: str = Form(...)):
     programas_db.append(nuevo_programa)
     return {"mensaje": "Programa agregado con éxito", "nuevo_programa": nuevo_programa}
 
+# Ruta para mostrar todos los programas
+@app.get('/programas', response_class=JSONResponse)
+async def mostrar_programas():
+    return {"programas": programas_db}
+
+# Ruta para mostrar formulario de registro en programa
+@app.get('/asignar-programa', response_class=HTMLResponse)
+async def AsignarPrograma(request: Request):
+    return templates.TemplateResponse('AsignarPrograma.html', {"request": request})
+
 # Ruta para que los voluntarios se unan a un programa
 @app.post('/unirse-programa', response_class=JSONResponse)
 async def unirse_programa(programa_id: str = Form(...), voluntario_id: str = Form(...)):
@@ -54,3 +96,6 @@ async def unirse_programa(programa_id: str = Form(...), voluntario_id: str = For
         return {"mensaje": "Voluntario agregado al programa con éxito"}
     else:
         return {"mensaje": "Programa o voluntario no encontrado"}
+
+if __name__ == '__main__':
+    uvicorn.run('app:app')
