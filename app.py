@@ -26,7 +26,7 @@ async def voluntario(request: Request):
 
 # Ruta para registrar un voluntario
 @app.post('/create-voluntario', response_class=JSONResponse)
-async def add_voluntario(ID: str = Form(...), Nombre: str = Form(...), Apellido: str = Form(...), Telefono: str = Form(...), Intereses: str = Form(...)):
+async def add_voluntario(ID: int = Form(...), Nombre: str = Form(...), Apellido: str = Form(...), Telefono: int = Form(...), Intereses: str = Form(...)):
     nuevo_voluntario = {
         'ID': ID,
         'Nombre': Nombre,
