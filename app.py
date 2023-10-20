@@ -36,7 +36,8 @@ async def add_voluntario(ID: int = Form(...), Nombre: str = Form(...), Apellido:
     }
 
     voluntarios_db.append(nuevo_voluntario)
-    return {"mensaje": "Voluntario agregado con éxito", "nuevo_voluntario": nuevo_voluntario}
+    print('mensaje": "Voluntario agregado con éxito", "nuevo_voluntario": nuevo_voluntario')
+    return{ID:ID,Nombre:Nombre,Apellido:Apellido,Telefono:Telefono,Intereses:Intereses}
 
 # Ruta para eliminar voluntario por ID
 @app.get('/eliminar-voluntario', response_class=HTMLResponse)
