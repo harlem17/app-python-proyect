@@ -13,7 +13,7 @@ voluntarios_db = []
 programas_db = []
 
 # Ruta para mostrar la página principal
-@app.get("/", response_class=HTMLResponse)
+@app.post("/", response_class=HTMLResponse)
 async def index(request: Request):
     print('Request for index page received')
     return templates.TemplateResponse('Home.html', {"request": request})
@@ -24,7 +24,7 @@ async def voluntario(request: Request):
     return templates.TemplateResponse('FormularioVoluntario.html', {"request": request})
 
 # Ruta para registrar un voluntario
-@app.post('/create-voluntario', response_class=JSONResponse)
+@app.get('/create-voluntario', response_class=JSONResponse)
 async def add_voluntario(ID: str = Form(...), Nombre: str = Form(...), Apellido: str = Form(...), Telefono: str = Form(...), Intereses: str = Form(...)):
     nuevo_voluntario = {
         'ID': ID,
