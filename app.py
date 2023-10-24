@@ -57,5 +57,15 @@ async def add_programa(nombre: str = Form(...), descripcion: str = Form(...)):
 
 # Resto de tus rutas...
 
+# Ruta para mostrar todos los voluntarios
+@app.get('/voluntarios', response_class=JSONResponse)
+async def mostrar_voluntarios():
+    return {"voluntarios": voluntarios_db}
+
+# Ruta para mostrar todos los programas
+@app.get('/programas', response_class=JSONResponse)
+async def mostrar_programas():
+    return {"programas": programas_db}
+
 if __name__ == '__main__':
     uvicorn.run('app:app')
