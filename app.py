@@ -1,4 +1,4 @@
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, Request, HTTPException
 from fastapi import Form
 from fastapi.templating import Jinja2Templates
 from fastapi.responses import HTMLResponse, JSONResponse
@@ -32,6 +32,7 @@ async def add_voluntario(ID: int = Form(...), Nombre: str = Form(...), Apellido:
 
     voluntarios_db.append(nuevo_voluntario)
     print('Voluntario agregado con éxito', nuevo_voluntario)
+    return JSONResponse(content={"mensaje": "Voluntario agregado con éxito", "nuevo_voluntario": nuevo_voluntario})
 
 # Ruta para eliminar voluntario por ID
 @app.post('/eliminar-voluntario', response_class=JSONResponse)
@@ -40,8 +41,8 @@ async def delete_voluntario(ID: int = Form(...)):
         if voluntario['ID'] == ID:
             voluntarios_db.remove(voluntario)
             print("Voluntario eliminado con éxito")
-            return
-    print("Voluntario no encontrado")
+            return JSONResponse(content={"mensaje": "Voluntario eliminado con éxito"})
+    raise HTTPException(status_code=404, detail="Voluntario no encontrado")
 
 # Ruta para registrar un programa
 @app.post('/create-programa', response_class=JSONResponse)
@@ -54,8 +55,7 @@ async def add_programa(nombre: str = Form(...), descripcion: str = Form(...)):
 
     programas_db.append(nuevo_programa)
     print("Programa agregado con éxito", nuevo_programa)
-
-# Resto de tus rutas...
+    return JSONResponse(content={"mensaje": "Programa agregado con éxito", "nuevo_programa": nuevo_programa})
 
 # Ruta para mostrar todos los voluntarios
 @app.get('/voluntarios', response_class=JSONResponse)
