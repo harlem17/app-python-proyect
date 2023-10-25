@@ -70,7 +70,7 @@ async def unirse_programa(nombre_programa: str = Form(...), voluntario_id: int =
         return JSONResponse(content={"mensaje": "Voluntario agregado al programa con éxito"})
     else:
         print("Programa o voluntario no encontrado")
-        return JSONResponse(content={"mensaje": "Programa o voluntario no encontrados"})
+        return JSONResponse(content={"mensaje": "Programa o voluntario no encontrado"})
 
 # Ruta para mostrar todos los voluntarios
 @app.get('/voluntarios', response_class=JSONResponse)
