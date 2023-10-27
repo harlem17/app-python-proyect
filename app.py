@@ -14,13 +14,17 @@ voluntarios_db = []
 programas_db = []
 
 # Ruta para mostrar la página principal
+
+
 @app.get("/", response_class=HTMLResponse)
 async def index(request: Request):
     print('Request for index page received')
     return templates.TemplateResponse('Home.html', {"request": request})
 
 # Ruta para registrar un voluntario
-@app.post('/create-voluntario', response_class=JSONResponse)
+
+
+@app.post('/create-voluntario', response_class=HTMLResponse)
 async def add_voluntario(ID: int = Form(...), Nombre: str = Form(...), Apellido: str = Form(...), Telefono: int = Form(...), Intereses: str = Form(...)):
     nuevo_voluntario = {
         'ID': ID,
@@ -32,10 +36,12 @@ async def add_voluntario(ID: int = Form(...), Nombre: str = Form(...), Apellido:
 
     voluntarios_db.append(nuevo_voluntario)
     print("Voluntario agregado con éxito", nuevo_voluntario)
-    return JSONResponse(content={"mensaje": "Voluntario agregado con éxito", "nuevo_voluntario": nuevo_voluntario})
+    return templates.TemplateResponse('FormularioVoluntario.html', {"request": Request})
 
 # Ruta para eliminar voluntario por ID
-@app.post('/eliminar-voluntario', response_class=JSONResponse)
+
+
+@app.delete('/eliminar-voluntario', response_class=JSONResponse)
 async def delete_voluntario(ID: int = Form(...)):
     for voluntario in voluntarios_db:
         if voluntario['ID'] == ID:
@@ -46,6 +52,8 @@ async def delete_voluntario(ID: int = Form(...)):
     return JSONResponse(content={"mensaje": "Voluntario no encontrado"})
 
 # Ruta para registrar un programa
+
+
 @app.post('/create-programa', response_class=JSONResponse)
 async def add_programa(nombre: str = Form(...), descripcion: str = Form(...)):
     nuevo_programa = {
@@ -59,10 +67,14 @@ async def add_programa(nombre: str = Form(...), descripcion: str = Form(...)):
     return JSONResponse(content={"mensaje": "Programa agregado con éxito", "nuevo_programa": nuevo_programa})
 
 # Ruta para que los voluntarios se unan a un programa
+
+
 @app.post('/unirse-programa', response_class=JSONResponse)
 async def unirse_programa(nombre_programa: str = Form(...), voluntario_id: int = Form(...)):
-    programa_encontrado = next((programa for programa in programas_db if programa['nombre'] == nombre_programa), None)
-    voluntario_encontrado = next((voluntario for voluntario in voluntarios_db if voluntario['ID'] == voluntario_id), None)
+    programa_encontrado = next(
+        (programa for programa in programas_db if programa['nombre'] == nombre_programa), None)
+    voluntario_encontrado = next(
+        (voluntario for voluntario in voluntarios_db if voluntario['ID'] == voluntario_id), None)
 
     if programa_encontrado and voluntario_encontrado:
         programa_encontrado['participantes'].append(voluntario_encontrado)
@@ -73,11 +85,15 @@ async def unirse_programa(nombre_programa: str = Form(...), voluntario_id: int =
         return JSONResponse(content={"mensaje": "Programa o voluntario no encontrado"})
 
 # Ruta para mostrar todos los voluntarios
+
+
 @app.get('/voluntarios', response_class=JSONResponse)
 async def mostrar_voluntarios():
     return JSONResponse(content={"voluntarios": voluntarios_db})
 
 # Ruta para mostrar todos los programas
+
+
 @app.get('/programas', response_class=JSONResponse)
 async def mostrar_programas():
     return JSONResponse(content={"programas": programas_db})
