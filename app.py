@@ -2,6 +2,7 @@ from fastapi import FastAPI, Request
 from fastapi import Form
 from fastapi.templating import Jinja2Templates
 from fastapi.responses import HTMLResponse, JSONResponse
+from fastapi.middleware.cors import CORSMiddleware
 import uvicorn
 
 app = FastAPI()
