@@ -7,6 +7,14 @@ import uvicorn
 app = FastAPI()
 templates = Jinja2Templates(directory="templates")
 
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # Esto permite solicitudes desde cualquier origen
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
 # Lista para almacenar voluntarios (simulación de una base de datos)
 voluntarios_db = []
 
