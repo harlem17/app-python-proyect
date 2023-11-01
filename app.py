@@ -61,6 +61,19 @@ async def delete_voluntario(ID: int = Form(...)):
     print("Voluntario no encontrado")
     return JSONResponse(content={"mensaje": "Voluntario no encontrado"}, status_code=404)
 
+# Ruta para registrar un programa
+@app.post('/create-programa', response_class=JSONResponse)
+async def add_programa(nombre: str = Form(...), descripcion: str = Form(...)):
+    nuevo_programa = {
+        'nombre': nombre,
+        'descripcion': descripcion,
+        'participantes': []
+    }
+
+    programas_db.append(nuevo_programa)
+    print("Programa agregado con éxito", nuevo_programa)
+    return JSONResponse(content={"mensaje": "Programa agregado con éxito", "nuevo_programa": nuevo_programa}, status_code=200)
+
 # Ruta para que los voluntarios se unan a un programa
 @app.post('/unirse-programa', response_class=JSONResponse)
 async def unirse_programa(nombre_programa: str = Form(...), voluntario_id: int = Form(...)):
