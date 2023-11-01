@@ -88,6 +88,18 @@ async def unirse_programa(nombre_programa: str = Form(...), voluntario_id: int =
         print("Programa o voluntario no encontrado")
         return JSONResponse(content={"mensaje": "Programa o voluntario no encontrado"}, status_code=404)
 
+# Ruta para eliminar programa por Nombre
+@app.delete('/eliminar-programa', response_class=JSONResponse)
+async def delete_programa(Nombre: str = Form(...)):
+    for programa in programas_db:
+        if programa['nombre'] == nombre:
+            programas_db.remove(programa)
+            print("Programa eliminado con éxito")
+            return JSONResponse(content={"mensaje": "Programa eliminado con éxito"}, status_code=200)
+
+    print("Programa no encontrado")
+    return JSONResponse(content={"mensaje": "Programa no encontrado"}, status_code=404)
+
 # Ruta para mostrar todos los voluntarios
 @app.get('/voluntarios', response_class=JSONResponse)
 async def mostrar_voluntarios():
