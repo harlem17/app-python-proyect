@@ -3,6 +3,7 @@ from fastapi import Form
 from fastapi.templating import Jinja2Templates
 from fastapi.responses import HTMLResponse, JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
+import sqlite3 as sql
 import uvicorn
 
 app = FastAPI()
@@ -22,6 +23,30 @@ voluntarios_db = []
 # Lista para almacenar programas
 programas_db = []
 
+def createDB():
+    conn = sql.connect("nonprofitorganization")
+    conn.commit()
+    conn.close()
+
+def createTable():
+    conn = sql.connect("nonprofitorganization.db")
+    cursor = conn.cursor()
+    cursor.execute(
+        """CREATE TABLE voluntarios(
+            ID integer,
+            Nombre text,
+            Apellido text,
+            Telefono integer,
+            Intereses text
+        )"""
+        """CREATE TABLE programas(
+            Nombre text,
+            Descripcion text
+        )"""
+    )
+    conn.commit()   
+    conn.close
+
 # Ruta para mostrar la página principal
 @app.get("/", response_class=HTMLResponse)
 async def index(request: Request):
@@ -31,17 +56,18 @@ async def index(request: Request):
 # Ruta para registrar un voluntario
 @app.post('/create-voluntario', response_class=JSONResponse)
 async def add_voluntario(ID: int = Form(...), Nombre: str = Form(...), Apellido: str = Form(...), Telefono: int = Form(...), Intereses: str = Form(...)):
-    nuevo_voluntario = {
-        'ID': ID,
-        'Nombre': Nombre,
-        'Apellido': Apellido,
-        'Telefono': Telefono,
-        'Intereses': Intereses
-    }
+    conn = sql.connect('nonprofitorganization.db')
+    cursor = conn.cursor()
+    
+    cursor.execute('''
+        INSERT INTO voluntarios (ID, Nombre, Apellido, Telefono, Intereses)
+        VALUES (?, ?, ?, ?, ?)
+    ''', (ID, Nombre, Apellido, Telefono, Intereses))
+    
+    conn.commit()
+    conn.close()
+    return JSONResponse(content={"mensaje": "Voluntario agregado con éxito","":add_voluntario}, status_code=200)
 
-    voluntarios_db.append(nuevo_voluntario)
-    print("Voluntario agregado con éxito", nuevo_voluntario)
-    return JSONResponse(content={"mensaje": "Voluntario agregado con éxito", "nuevo_voluntario": nuevo_voluntario}, status_code=200)
 
 # Ruta para eliminar voluntario por ID
 @app.delete('/eliminar-voluntario', response_class=JSONResponse)
@@ -64,15 +90,18 @@ async def delete_voluntario(ID: int = Form(...)):
 # Ruta para registrar un programa
 @app.post('/create-programa', response_class=JSONResponse)
 async def add_programa(nombre: str = Form(...), descripcion: str = Form(...)):
-    nuevo_programa = {
-        'nombre': nombre,
-        'descripcion': descripcion,
-        'participantes': []
-    }
-
-    programas_db.append(nuevo_programa)
-    print("Programa agregado con éxito", nuevo_programa)
-    return JSONResponse(content={"mensaje": "Programa agregado con éxito", "nuevo_programa": nuevo_programa}, status_code=200)
+    conn = sql.connect('nonprofitorganization.db')
+    cursor = conn.cursor()
+    
+    cursor.execute('''
+        INSERT INTO programas ( nombre, descripcion)
+        VALUES (?, ?)
+    ''', (nombre, descripcion))
+    
+    conn.commit()
+    conn.close()
+    
+    return JSONResponse(content={"mensaje": "programa agregado con éxito"}, status_code=200)
 
 # Ruta para que los voluntarios se unan a un programa
 @app.post('/unirse-programa', response_class=JSONResponse)
@@ -90,13 +119,12 @@ async def unirse_programa(nombre_programa: str = Form(...), voluntario_id: int =
 
 # Ruta para eliminar programa por Nombre
 @app.delete('/eliminar-programa', response_class=JSONResponse)
-async def delete_programa(Nombre: str = Form(...)):
+async def delete_programa(nombre: str = Form(...)):
     for programa in programas_db:
         if programa['nombre'] == nombre:
             programas_db.remove(programa)
             print("Programa eliminado con éxito")
             return JSONResponse(content={"mensaje": "Programa eliminado con éxito"}, status_code=200)
-
     print("Programa no encontrado")
     return JSONResponse(content={"mensaje": "Programa no encontrado"}, status_code=404)
 
