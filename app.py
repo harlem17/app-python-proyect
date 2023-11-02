@@ -67,8 +67,10 @@ async def add_voluntario(voluntario: Voluntario):
         conn.close()
 
         return voluntario
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error al registrar voluntario: {str(e)}")
+    except sqlite3.Error as e:
+        conn.close()
+        error_msg = str(e)
+        raise HTTPException(status_code=500, detail=f"Error al registrar voluntario: {error_msg}")
 
 # Ruta para eliminar voluntario por ID
 @app.delete('/eliminar-voluntario')
