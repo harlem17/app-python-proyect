@@ -11,41 +11,21 @@ templates = Jinja2Templates(directory="templates")
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Esto permite solicitudes desde cualquier origen
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-# Conéctate a la base de datos SQLite y crea las tablas si no existen
-conn = sqlite3.connect('nonprofitorganization.db')
+# Conéctate a la base de datos SQLite
+conn = sqlite3.connect('mydatabase.db')
 cursor = conn.cursor()
 
-cursor.execute('''
-    CREATE TABLE IF NOT EXISTS voluntarios (
-        id INTEGER PRIMARY KEY,
-        nombre TEXT NOT NULL,
-        apellido TEXT NOT NULL,
-        telefono INTEGER NOT NULL,
-        intereses TEXT
-    )
-''')
-
-cursor.execute('''
-    CREATE TABLE IF NOT EXISTS programas (
-        nombre TEXT PRIMARY KEY,
-        descripcion TEXT
-    )
-''')
-
-conn.commit()
-conn.close()
-
 # Lista para almacenar voluntarios (simulación de una base de datos)
-voluntarios_db = []
+# voluntarios_db = []
 
 # Lista para almacenar programas
-programas_db = []
+# programas_db = []
 
 # Ruta para mostrar la página principal
 @app.get("/", response_class=HTMLResponse)
@@ -57,17 +37,14 @@ async def index(request: Request):
 @app.post('/create-voluntario', response_class=JSONResponse)
 async def add_voluntario(ID: int = Form(...), Nombre: str = Form(...), Apellido: str = Form(...), Telefono: int = Form(...), Intereses: str = Form(...)):
     try:
-        nuevo_voluntario = {
-            'ID': ID,
-            'Nombre': Nombre,
-            'Apellido': Apellido,
-            'Telefono': Telefono,
-            'Intereses': Intereses
-        }
+        cursor.execute('''
+            INSERT INTO voluntarios (id, nombre, apellido, telefono, intereses)
+            VALUES (?, ?, ?, ?, ?)
+        ''', (ID, Nombre, Apellido, Telefono, Intereses))
+        conn.commit()
 
-        voluntarios_db.append(nuevo_voluntario)
-        print("Voluntario agregado con éxito", nuevo_voluntario)
-        return JSONResponse(content={"mensaje": "Voluntario agregado con éxito", "nuevo_voluntario": nuevo_voluntario}, status_code=200)
+        print("Voluntario agregado con éxito")
+        return JSONResponse(content={"mensaje": "Voluntario agregado con éxito"}, status_code=200)
     except Exception as e:
         return JSONResponse(content={"error": str(e)}, status_code=500)
 
@@ -75,20 +52,11 @@ async def add_voluntario(ID: int = Form(...), Nombre: str = Form(...), Apellido:
 @app.delete('/eliminar-voluntario', response_class=JSONResponse)
 async def delete_voluntario(ID: int = Form(...)):
     try:
-        for voluntario in voluntarios_db:
-            if voluntario['ID'] == ID:
-                voluntarios_db.remove(voluntario)
+        cursor.execute('DELETE FROM voluntarios WHERE id = ?', (ID,))
+        conn.commit()
 
-                # Eliminar al voluntario de la lista de participantes en los programas
-                for programa in programas_db:
-                    if voluntario in programa['participantes']:
-                        programa['participantes'].remove(voluntario)
-
-                print("Voluntario eliminado con éxito")
-                return JSONResponse(content={"mensaje": "Voluntario eliminado con éxito"}, status_code=200)
-
-        print("Voluntario no encontrado")
-        return JSONResponse(content={"mensaje": "Voluntario no encontrado"}, status_code=404)
+        print("Voluntario eliminado con éxito")
+        return JSONResponse(content={"mensaje": "Voluntario eliminado con éxito"}, status_code=200)
     except Exception as e:
         return JSONResponse(content={"error": str(e)}, status_code=500)
 
@@ -96,15 +64,14 @@ async def delete_voluntario(ID: int = Form(...)):
 @app.post('/create-programa', response_class=JSONResponse)
 async def add_programa(nombre: str = Form(...), descripcion: str = Form(...)):
     try:
-        nuevo_programa = {
-            'nombre': nombre,
-            'descripcion': descripcion,
-            'participantes': []
-        }
+        cursor.execute('''
+            INSERT INTO programas (nombre, descripcion)
+            VALUES (?, ?)
+        ''', (nombre, descripcion))
+        conn.commit()
 
-        programas_db.append(nuevo_programa)
-        print("Programa agregado con éxito", nuevo_programa)
-        return JSONResponse(content={"mensaje": "Programa agregado con éxito", "nuevo_programa": nuevo_programa}, status_code=200)
+        print("Programa agregado con éxito")
+        return JSONResponse(content={"mensaje": "Programa agregado con éxito"}, status_code=200)
     except Exception as e:
         return JSONResponse(content={"error": str(e)}, status_code=500)
 
@@ -112,16 +79,24 @@ async def add_programa(nombre: str = Form(...), descripcion: str = Form(...)):
 @app.post('/unirse-programa', response_class=JSONResponse)
 async def unirse_programa(nombre_programa: str = Form(...), voluntario_id: int = Form(...)):
     try:
-        programa_encontrado = next((programa for programa in programas_db if programa['nombre'] == nombre_programa), None)
-        voluntario_encontrado = next((voluntario for voluntario in voluntarios_db if voluntario['ID'] == voluntario_id), None)
+        cursor.execute('SELECT * FROM voluntarios WHERE id = ?', (voluntario_id,))
+        voluntario = cursor.fetchone()
+        
+        if voluntario:
+            cursor.execute('SELECT * FROM programas WHERE nombre = ?', (nombre_programa,))
+            programa = cursor.fetchone()
 
-        if programa_encontrado and voluntario_encontrado:
-            programa_encontrado['participantes'].append(voluntario_encontrado)
-            print("Voluntario agregado al programa con éxito")
-            return JSONResponse(content={"mensaje": "Voluntario agregado al programa con éxito"}, status_code=200)
-        else:
-            print("Programa o voluntario no encontrado")
-            return JSONResponse(content={"mensaje": "Programa o voluntario no encontrado"}, status_code=404)
+            if programa:
+                cursor.execute('''
+                    INSERT INTO programa_voluntario (programa_id, voluntario_id)
+                    VALUES (?, ?)
+                ''', (programa[0], voluntario[0]))
+                conn.commit()
+                print("Voluntario agregado al programa con éxito")
+                return JSONResponse(content={"mensaje": "Voluntario agregado al programa con éxito"}, status_code=200)
+
+        print("Programa o voluntario no encontrado")
+        return JSONResponse(content={"mensaje": "Programa o voluntario no encontrado"}, status_code=404)
     except Exception as e:
         return JSONResponse(content={"error": str(e)}, status_code=500)
 
@@ -129,26 +104,29 @@ async def unirse_programa(nombre_programa: str = Form(...), voluntario_id: int =
 @app.delete('/eliminar-programa', response_class=JSONResponse)
 async def delete_programa(Nombre: str = Form(...)):
     try:
-        for programa in programas_db:
-            if programa['nombre'] == Nombre:
-                programas_db.remove(programa)
-                print("Programa eliminado con éxito")
-                return JSONResponse(content={"mensaje": "Programa eliminado con éxito"}, status_code=200)
+        cursor.execute('DELETE FROM programas WHERE nombre = ?', (Nombre,))
+        conn.commit()
 
-        print("Programa no encontrado")
-        return JSONResponse(content={"mensaje": "Programa no encontrado"}, status_code=404)
+        print("Programa eliminado con éxito")
+        return JSONResponse(content={"mensaje": "Programa eliminado con éxito"}, status_code=200)
     except Exception as e:
         return JSONResponse(content={"error": str(e)}, status_code=500)
 
 # Ruta para mostrar todos los voluntarios
 @app.get('/voluntarios', response_class=JSONResponse)
 async def mostrar_voluntarios():
-    return JSONResponse(content={"voluntarios": voluntarios_db}, status_code=200)
+    cursor.execute('SELECT * FROM voluntarios')
+    result = cursor.fetchall()
+    voluntarios = [{"ID": row[0], "Nombre": row[1], "Apellido": row[2], "Telefono": row[3], "Intereses": row[4]} for row in result]
+    return JSONResponse(content={"voluntarios": voluntarios}, status_code=200)
 
 # Ruta para mostrar todos los programas
 @app.get('/programas', response_class=JSONResponse)
 async def mostrar_programas():
-    return JSONResponse(content={"programas": programas_db}, status_code=200)
+    cursor.execute('SELECT * FROM programas')
+    result = cursor.fetchall()
+    programas = [{"nombre": row[0], "descripcion": row[1]} for row in result]
+    return JSONResponse(content={"programas": programas}, status_code=200)
 
 if __name__ == '__main__':
     uvicorn.run('app:app', host='0.0.0.0', port=8000, reload=True)
