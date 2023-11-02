@@ -18,7 +18,7 @@ app.add_middleware(
 )
 
 # Conéctate a la base de datos SQLite
-conn = sqlite3.connect('mydatabase.db')
+conn = sqlite3.connect('nonprofitorganization.db')
 cursor = conn.cursor()
 
 # Lista para almacenar voluntarios (simulación de una base de datos)
