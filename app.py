@@ -59,7 +59,6 @@ async def index(request: Request):
     print('Request for index page received')
     return templates.TemplateResponse('Home.html', {"request": request})
 
-# Ruta para registrar un voluntario
 @app.post('/create-voluntario', response_class=JSONResponse)
 async def add_voluntario(ID: int = Form(...), Nombre: str = Form(...), Apellido: str = Form(...), Telefono: int = Form(...), Intereses: str = Form(...)):
     try:
@@ -71,6 +70,8 @@ async def add_voluntario(ID: int = Form(...), Nombre: str = Form(...), Apellido:
         print("Voluntario agregado con éxito")
         return JSONResponse(content={"mensaje": "Voluntario agregado con éxito"}, status_code=200)
     except Exception as e:
+        # Registra el error en la consola para depuración
+        print(f"Error al agregar voluntario: {str(e)}")
         return JSONResponse(content={"error": str(e)}, status_code=500)
 
 # Ruta para eliminar voluntario por ID
@@ -161,46 +162,32 @@ async def mostrar_voluntarios():
     except Exception as e:
         return JSONResponse(content={"error": str(e)}, status_code=500)
 
-# Ruta para mostrar todos los programas con voluntarios
+# Ruta para mostrar todos los programas y los voluntarios que se han unido
 @app.get('/programas', response_class=JSONResponse)
-async def mostrar_programas():
+async def mostrar_programas_con_voluntarios():
     try:
         conn = sqlite3.connect('nonprofitorganization.db')
         cursor = conn.cursor()
+        cursor.execute('SELECT * FROM programas')
+        programas_result = cursor.fetchall()
 
-        # Consulta para obtener la información de los programas y los voluntarios asociados
-        cursor.execute('''
-            SELECT p.nombre, p.descripcion, v.id, v.nombre as nombre_voluntario, v.apellido as apellido_voluntario, v.telefono, v.intereses
-            FROM programas p
-            LEFT JOIN programa_voluntario pv ON p.rowid = pv.programa_id
-            LEFT JOIN voluntarios v ON pv.voluntario_id = v.rowid
-        ''')
-        
-        result = cursor.fetchall()
-        programas = {}
+        programas = []
+        for programa_row in programas_result:
+            programa = {"nombre": programa_row[0], "descripcion": programa_row[1]}
+            
+            cursor.execute('SELECT v.nombre, v.apellido, v.telefono, v.intereses FROM voluntarios v INNER JOIN programa_voluntario pv ON v.id = pv.voluntario_id INNER JOIN programas p ON p.nombre = pv.programa_id WHERE p.nombre = ?', (programa_row[0],))
+            voluntarios_result = cursor.fetchall()
 
-        for row in result:
-            nombre_programa = row[0]
-            descripcion_programa = row[1]
-            if nombre_programa not in programas:
-                programas[nombre_programa] = {
-                    "descripcion": descripcion_programa,
-                    "voluntarios": []
-                }
-            if row[2] is not None:
-                voluntario = {
-                    "ID": row[2],
-                    "Nombre": row[3],
-                    "Apellido": row[4],
-                    "Telefono": row[5],
-                    "Intereses": row[6]
-                }
-                programas[nombre_programa]["voluntarios"].append(voluntario)
+            voluntarios = [{"nombre": v[0], "apellido": v[1], "telefono": v[2], "intereses": v[3]} for v in voluntarios_result]
+            programa["voluntarios"] = voluntarios
+
+            programas.append(programa)
 
         conn.close()
         return JSONResponse(content={"programas": programas}, status_code=200)
     except Exception as e:
         return JSONResponse(content={"error": str(e)}, status_code=500)
+
 
 if __name__ == '__main__':
     uvicorn.run('app:app', host='0.0.0.0', port=8000, reload=True)
