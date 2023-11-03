@@ -161,15 +161,42 @@ async def mostrar_voluntarios():
     except Exception as e:
         return JSONResponse(content={"error": str(e)}, status_code=500)
 
-# Ruta para mostrar todos los programas
+# Ruta para mostrar todos los programas con voluntarios
 @app.get('/programas', response_class=JSONResponse)
 async def mostrar_programas():
     try:
         conn = sqlite3.connect('nonprofitorganization.db')
         cursor = conn.cursor()
-        cursor.execute('SELECT * FROM programas')
+
+        # Consulta para obtener la información de los programas y los voluntarios asociados
+        cursor.execute('''
+            SELECT p.nombre, p.descripcion, v.id, v.nombre as nombre_voluntario, v.apellido as apellido_voluntario, v.telefono, v.intereses
+            FROM programas p
+            LEFT JOIN programa_voluntario pv ON p.rowid = pv.programa_id
+            LEFT JOIN voluntarios v ON pv.voluntario_id = v.rowid
+        ''')
+        
         result = cursor.fetchall()
-        programas = [{"nombre": row[0], "descripcion": row[1]} for row in result]
+        programas = {}
+
+        for row in result:
+            nombre_programa = row[0]
+            descripcion_programa = row[1]
+            if nombre_programa not in programas:
+                programas[nombre_programa] = {
+                    "descripcion": descripcion_programa,
+                    "voluntarios": []
+                }
+            if row[2] is not None:
+                voluntario = {
+                    "ID": row[2],
+                    "Nombre": row[3],
+                    "Apellido": row[4],
+                    "Telefono": row[5],
+                    "Intereses": row[6]
+                }
+                programas[nombre_programa]["voluntarios"].append(voluntario)
+
         conn.close()
         return JSONResponse(content={"programas": programas}, status_code=200)
     except Exception as e:
