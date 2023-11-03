@@ -107,23 +107,29 @@ async def unirse_programa(nombre_programa: str = Form(...), voluntario_id: int =
     try:
         conn = sqlite3.connect('nonprofitorganization.db')
         cursor = conn.cursor()
+
+        # Verificar si el voluntario existe
         cursor.execute('SELECT * FROM voluntarios WHERE id = ?', (voluntario_id,))
         voluntario = cursor.fetchone()
-        
-        if voluntario:
-            cursor.execute('SELECT * FROM programas WHERE nombre = ?', (nombre_programa,))
-            programa = cursor.fetchone()
 
-            if programa:
-                cursor.execute('INSERT INTO programa_voluntario (programa_id, voluntario_id) VALUES (?, ?)', (programa[0], voluntario[0]))
-                conn.commit()
-                conn.close()
-                print("Voluntario agregado al programa con éxito")
-                return JSONResponse(content={"mensaje": "Voluntario agregado al programa con éxito"}, status_code=200)
-        
+        # Verificar si el programa existe
+        cursor.execute('SELECT * FROM programas WHERE nombre = ?', (nombre_programa,))
+        programa = cursor.fetchone()
+
         conn.close()
-        print("Programa o voluntario no encontrado")
-        return JSONResponse(content={"mensaje": "Programa o voluntario no encontrado"}, status_code=404)
+
+        if voluntario and programa:
+            # Ambos existen, ahora realiza la unión
+            conn = sqlite3.connect('nonprofitorganization.db')
+            cursor = conn.cursor()
+            cursor.execute('INSERT INTO programa_voluntario (programa_id, voluntario_id) VALUES (?, ?)', (programa[0], voluntario[0]))
+            conn.commit()
+            conn.close()
+            print("Voluntario agregado al programa con éxito")
+            return JSONResponse(content={"mensaje": "Voluntario agregado al programa con éxito"}, status_code=200)
+        else:
+            print("Programa o voluntario no encontrado")
+            return JSONResponse(content={"mensaje": "Programa o voluntario no encontrado"}, status_code=404)
     except Exception as e:
         return JSONResponse(content={"error": str(e)}, status_code=500)
 
