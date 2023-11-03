@@ -18,7 +18,7 @@ app.add_middleware(
 )
 
 # Conéctate a la base de datos SQLite
-conn = sqlite3.connect('DSNonProfitOrganization.db')
+conn = sqlite3.connect('nonprofitorganization.db')
 cursor = conn.cursor()
 
 # Crea una tabla para almacenar voluntarios si no existe
