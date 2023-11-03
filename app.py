@@ -91,15 +91,15 @@ async def add_programa(nombre: str = Form(...), descripcion: str = Form(...)):
     except Exception as e:
         return JSONResponse(content={"error": str(e)}, status_code=500)
 
-# Ruta para que los voluntarios se unan a un programa
+# Ruta para que los voluntarios se unan a un programa (versión síncrona)
 @app.post('/unirse-programa', response_class=JSONResponse)
-async def unirse_programa(nombre_programa: str = Form(...), voluntario_id: int = Form(...)):
+def unirse_programa_sync(nombre_programa: str = Form(...), voluntario_id: int = Form(...)):
     try:
         conn = sqlite3.connect('nonprofitorganization.db')
         cursor = conn.cursor()
         cursor.execute('SELECT * FROM voluntarios WHERE id = ?', (voluntario_id,))
         voluntario = cursor.fetchone()
-        
+
         if voluntario:
             cursor.execute('SELECT * FROM programas WHERE nombre = ?', (nombre_programa,))
             programa = cursor.fetchone()
@@ -110,7 +110,7 @@ async def unirse_programa(nombre_programa: str = Form(...), voluntario_id: int =
                 conn.close()
                 print("Voluntario agregado al programa con éxito")
                 return JSONResponse(content={"mensaje": "Voluntario agregado al programa con éxito"}, status_code=200)
-        
+
         conn.close()
         print("Programa o voluntario no encontrado")
         return JSONResponse(content={"mensaje": "Programa o voluntario no encontrado"}, status_code=404)
