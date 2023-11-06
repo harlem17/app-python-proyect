@@ -28,7 +28,6 @@ async def get_database_conn():
     return conn
 
 # Ruta para mostrar la página principal
-
 @app.get("/", response_class=HTMLResponse)
 async def index(request: Request):
     print('Request for index page received')
