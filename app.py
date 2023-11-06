@@ -20,16 +20,16 @@ app.add_middleware(
 async def get_database_conn():
     try:
         conn = await asyncpg.connect(
-            user="Kaleth Alexander",
-            password="K1043637215@",
-            database="DS-NonProfitOrganization",
-            host="dpg-cl3u3mauuipc738mvp70-a",
-            port="5432"
+            user="postgres",
+            password="1cBFBFEgCGaAC5da6Cb21Bgdf215FD-C",
+            database="railway",
+            host="roundhouse.proxy.rlwy.ne",
+            port="51888"
         )
-        print("Conexión exitosa a la base de datos PostgreSQL en Render")
+        print("Conexión exitosa a la base de datos PostgreSQL")
         return conn
     except Exception as e:
-        print(f"Error de conexión a la base de datos en Render: {str(e)}")
+        print(f"Error de conexión a la base de datos: {str(e)}")
         raise e
 
 # Ruta para mostrar la página principal
