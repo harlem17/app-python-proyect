@@ -21,7 +21,7 @@ async def get_database_conn():
     try:
         conn = await asyncpg.connect(
             user="Kaleth Alexander",
-            password="iBrkUMLqK57gCrq1gE8DRekGadKK6bmL",
+            password="K1043637215@",
             database="DS-NonProfitOrganization",
             host="dpg-cl3u3mauuipc738mvp70-a",
             port="5432"
