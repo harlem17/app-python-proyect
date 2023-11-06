@@ -17,12 +17,39 @@ app.add_middleware(
 )
 
 # La URL de conexión a la base de datos PostgreSQL proporcionada por Railway
-db_url = "postgres://postgres:1cBFBFEgCGaAC5da6Cb21Bgdf215FD-C@roundhouse.proxy.rlwy.net:51888/railway"
+db_url = "postgresql://usuario:contraseña@localhost:5432/nombre_de_la_base_de_datos"
 
 # Función para obtener la conexión a la base de datos
 async def get_database_conn():
     conn = await asyncpg.connect(db_url)
     return conn
+
+# Crear la tabla 'voluntarios' si no existe
+async def create_voluntarios_table():
+    conn = await get_database_conn()
+    query = '''
+    CREATE TABLE IF NOT EXISTS voluntarios (
+        id SERIAL PRIMARY KEY,
+        nombre TEXT NOT NULL,
+        apellido TEXT NOT NULL,
+        telefono INTEGER NOT NULL,
+        intereses TEXT
+    )
+    '''
+    await conn.execute(query)
+    await conn.close()
+
+# Crear la tabla 'programas' si no existe
+async def create_programas_table():
+    conn = await get_database_conn()
+    query = '''
+    CREATE TABLE IF NOT EXISTS programas (
+        nombre TEXT PRIMARY KEY,
+        descripcion TEXT
+    )
+    '''
+    await conn.execute(query)
+    await conn.close()
 
 # Ruta para mostrar la página principal
 @app.get("/", response_class=HTMLResponse)
@@ -152,4 +179,6 @@ async def mostrar_programas_con_voluntarios():
         return JSONResponse(content={"error": str(e)}, status_code=500)
 
 if __name__ == '__main__':
+    create_voluntarios_table()  # Crear la tabla de voluntarios al iniciar
+    create_programas_table()  # Crear la tabla de programas al iniciar
     uvicorn.run('app:app', host='0.0.0.0', port=8000, reload=True)
