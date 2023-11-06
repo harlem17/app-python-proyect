@@ -16,21 +16,13 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Conéctate a la base de datos PostgreSQL
+# La URL de conexión a la base de datos PostgreSQL proporcionada por Railway
+db_url = "postgres://postgres:1cBFBFEgCGaAC5da6Cb21Bgdf215FD-C@roundhouse.proxy.rlwy.net:51888/railway"
+
+# Función para obtener la conexión a la base de datos
 async def get_database_conn():
-    try:
-        conn = await asyncpg.connect(
-            user="postgres",
-            password="1cBFBFEgCGaAC5da6Cb21Bgdf215FD-C",
-            database="railway",
-            host="roundhouse.proxy.rlwy.ne",
-            port="51888"
-        )
-        print("Conexión exitosa a la base de datos PostgreSQL")
-        return conn
-    except Exception as e:
-        print(f"Error de conexión a la base de datos: {str(e)}")
-        raise e
+    conn = await asyncpg.connect(db_url)
+    return conn
 
 # Ruta para mostrar la página principal
 @app.get("/", response_class=HTMLResponse)
