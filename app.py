@@ -20,10 +20,10 @@ app.add_middleware(
 async def get_database_conn():
     try:
         conn = await asyncpg.connect(
-            user="postgres",
-            password="1043637215",
-            database="DS-NonProfitOrganization",
-            host="localhost",
+            user="DS-NonProfitOrganization",
+            password="iBrkUMLqK57gCrq1gE8DRekGadKK6bmL",
+            database="ds_nonprofitorganization",
+            host="dpg-cl3u3mauuipc738mvp70-a",
             port="5432"
         )
         print("Conexión exitosa a la base de datos PostgreSQL")
