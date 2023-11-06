@@ -18,14 +18,19 @@ app.add_middleware(
 
 # Conéctate a la base de datos PostgreSQL
 async def get_database_conn():
-    conn = await asyncpg.connect(
-        user="postgres",
-        password="1043637215",
-        database="DS-NonProfitOrganization",
-        host="localhost",
-        port="5432"
-    )
-    return conn
+    try:
+        conn = await asyncpg.connect(
+            user="postgres",
+            password="1043637215",
+            database="DS-NonProfitOrganization",
+            host="localhost",
+            port="5432"
+        )
+        print("Conexión exitosa a la base de datos PostgreSQL")
+        return conn
+    except Exception as e:
+        print(f"Error de conexión a la base de datos: {str(e)}")
+        raise e
 
 # Ruta para mostrar la página principal
 @app.get("/", response_class=HTMLResponse)
