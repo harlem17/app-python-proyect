@@ -16,8 +16,8 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# La URL de conexión a la base de datos PostgreSQL proporcionada por Railway
-db_url = "postgresql://usuario:contraseña@localhost:5432/nombre_de_la_base_de_datos"
+# La URL de conexión a la base de datos PostgreSQL proporcionada por Render
+db_url = "postgres://postgres:1cBFBFEgCGaAC5da6Cb21Bgdf215FD-C@roundhouse.proxy.rlwy.net:51888/railway"
 
 # Función para obtener la conexión a la base de datos
 async def get_database_conn():
@@ -178,6 +178,7 @@ async def mostrar_programas_con_voluntarios():
         print(f"Error al obtener programas con voluntarios: {str(e)}")
         return JSONResponse(content={"error": str(e)}, status_code=500)
 
+# Iniciar la aplicación FastAPI
 if __name__ == '__main__':
     create_voluntarios_table()  # Crear la tabla de voluntarios al iniciar
     create_programas_table()  # Crear la tabla de programas al iniciar
