@@ -17,7 +17,7 @@ app.add_middleware(
 )
 
 # La URL de conexión a la base de datos PostgreSQL proporcionada por railway
-db_url = "postgres://postgres:-f1daGe31F*cdBBgF13*2bffGC1-BGa2@viaduct.proxy.rlwy.net:33491/railway"
+db_url = "postgres://postgres:-f1daGe31F*cdBBgF13*2bffGC1-BGa2@postgres-xh6b.railway.internal:5432/railway"
 
 # Función para obtener la conexión a la base de datos
 async def get_database_conn():
