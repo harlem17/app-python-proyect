@@ -37,6 +37,17 @@ async def create_voluntarios_table():
     )
     '''
     await conn.execute(query)
+
+    # Crear la tabla 'programa_voluntario'
+    query_programa_voluntario = '''
+    CREATE TABLE IF NOT EXISTS programa_voluntario (
+        programa_id TEXT REFERENCES programas(nombre),
+        voluntario_id INTEGER REFERENCES voluntarios(id),
+        PRIMARY KEY (programa_id, voluntario_id)
+    )
+    '''
+    await conn.execute(query_programa_voluntario)
+
     await conn.close()
 
 # Crear la tabla 'programas' si no existe
@@ -46,19 +57,6 @@ async def create_programas_table():
     CREATE TABLE IF NOT EXISTS programas (
         nombre TEXT PRIMARY KEY,
         descripcion TEXT
-    )
-    '''
-    await conn.execute(query)
-    await conn.close()
-
-# Crear la tabla 'programa_voluntario' si no existe
-async def create_programa_voluntario_table():
-    conn = await get_database_conn()
-    query = '''
-    CREATE TABLE IF NOT EXISTS programa_voluntario (
-        programa_id TEXT REFERENCES programas(nombre),
-        voluntario_id INTEGER REFERENCES voluntarios(id),
-        PRIMARY KEY (programa_id, voluntario_id)
     )
     '''
     await conn.execute(query)
@@ -170,8 +168,6 @@ async def mostrar_voluntarios():
 async def mostrar_programas_con_voluntarios():
     try:
         conn = await get_database_conn()
-
-        # Obtener todos los programas
         query_programas = 'SELECT * FROM programas'
         programas_result = await conn.fetch(query_programas)
 
@@ -179,7 +175,6 @@ async def mostrar_programas_con_voluntarios():
         for programa_row in programas_result:
             programa = {"nombre": programa_row['nombre'], "descripcion": programa_row['descripcion']}
             
-            # Obtener voluntarios para cada programa
             query_voluntarios = 'SELECT v.nombre, v.apellido, v.telefono, v.intereses FROM voluntarios v INNER JOIN programa_voluntario pv ON v.id = pv.voluntario_id INNER JOIN programas p ON p.nombre = pv.programa_id WHERE p.nombre = $1'
             voluntarios_result = await conn.fetch(query_voluntarios, programa_row['nombre'])
 
@@ -194,9 +189,9 @@ async def mostrar_programas_con_voluntarios():
         print(f"Error al obtener programas con voluntarios: {str(e)}")
         return JSONResponse(content={"error": str(e)}, status_code=500)
 
-# Iniciar la aplicación FastAPI
+# Otras rutas...
+
 if __name__ == '__main__':
-    create_voluntarios_table()  # Crear la tabla de voluntarios al iniciar
-    create_programas_table()  # Crear la tabla de programas al iniciar
-    create_programa_voluntario_table()  # Crear la tabla de programa_voluntario al iniciar
+    create_voluntarios_table()
+    create_programas_table()
     uvicorn.run('app:app', host='0.0.0.0', port=8000, reload=True)
