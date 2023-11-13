@@ -162,8 +162,12 @@ async def mostrar_programas_con_voluntarios():
 
         programas = []
         for programa_row in programas_result:
-            programa = {"nombre": programa_row['nombre'], "descripcion": programa_row['descripcion']}
-            
+            programa = {
+                "nombre": programa_row['nombre'],
+                "descripcion": programa_row['descripcion'],
+                "voluntarios": []
+            }
+
             query_voluntarios = 'SELECT v.nombre, v.apellido, v.telefono, v.intereses FROM voluntarios v INNER JOIN programa_voluntario pv ON v.id = pv.voluntario_id INNER JOIN programas p ON p.nombre = pv.programa_id WHERE p.nombre = $1'
             voluntarios_result = await conn.fetch(query_voluntarios, programa_row['nombre'])
 
