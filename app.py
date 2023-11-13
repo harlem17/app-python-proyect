@@ -16,7 +16,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# La URL de conexión a la base de datos PostgreSQL proporcionada por Render
+# La URL de conexión a la base de datos PostgreSQL proporcionada por railway
 db_url = "postgres://postgres:1cBFBFEgCGaAC5da6Cb21Bgdf215FD-C@roundhouse.proxy.rlwy.net:51888/railway"
 
 # Función para obtener la conexión a la base de datos
