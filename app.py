@@ -1,4 +1,4 @@
-from fastapi import FastAPI, Request, Form, HTTPException
+from fastapi import FastAPI, Request, Form
 from fastapi.templating import Jinja2Templates
 from fastapi.responses import HTMLResponse, JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
@@ -16,8 +16,8 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# La URL de conexión a la base de datos PostgreSQL proporcionada por Railway
-db_url = "postgresql://usuario:contraseña@localhost:5432/nombre_de_la_base_de_datos"
+# La URL de conexión a la base de datos PostgreSQL proporcionada por Render
+db_url = "postgres://postgres:1cBFBFEgCGaAC5da6Cb21Bgdf215FD-C@roundhouse.proxy.rlwy.net:51888/railway"
 
 # Función para obtener la conexión a la base de datos
 async def get_database_conn():
@@ -67,11 +67,9 @@ async def add_voluntario(ID: int = Form(...), Nombre: str = Form(...), Apellido:
         await conn.close()
         print("Voluntario agregado con éxito")
         return JSONResponse(content={"mensaje": "Voluntario agregado con éxito"}, status_code=200)
-    except asyncpg.exceptions.UniqueViolationError:
-        raise HTTPException(status_code=400, detail="El ID ya existe. Introduce un ID único.")
     except Exception as e:
         print(f"Error al agregar voluntario: {str(e)}")
-        raise HTTPException(status_code=500, detail="Error al agregar voluntario")
+        return JSONResponse(content={"error": str(e)}, status_code=500)
 
 # Ruta para eliminar voluntario por ID
 @app.delete('/eliminar-voluntario', response_class=JSONResponse)
@@ -85,7 +83,7 @@ async def delete_voluntario(ID: int = Form(...)):
         return JSONResponse(content={"mensaje": "Voluntario eliminado con éxito"}, status_code=200)
     except Exception as e:
         print(f"Error al eliminar voluntario: {str(e)}")
-        raise HTTPException(status_code=500, detail="Error al eliminar voluntario")
+        return JSONResponse(content={"error": str(e)}, status_code=500)
 
 # Ruta para registrar un programa
 @app.post('/create-programa', response_class=JSONResponse)
@@ -97,11 +95,9 @@ async def add_programa(nombre: str = Form(...), descripcion: str = Form(...)):
         await conn.close()
         print("Programa agregado con éxito")
         return JSONResponse(content={"mensaje": "Programa agregado con éxito"}, status_code=200)
-    except asyncpg.exceptions.UniqueViolationError:
-        raise HTTPException(status_code=400, detail="El nombre del programa ya existe. Introduce un nombre único.")
     except Exception as e:
         print(f"Error al agregar programa: {str(e)}")
-        raise HTTPException(status_code=500, detail="Error al agregar programa")
+        return JSONResponse(content={"error": str(e)}, status_code=500)
 
 # Ruta para que los voluntarios se unan a un programa
 @app.post('/unirse-programa', response_class=JSONResponse)
@@ -123,10 +119,10 @@ async def unirse_programa(nombre_programa: str = Form(...), voluntario_id: int =
             return JSONResponse(content={"mensaje": "Voluntario agregado al programa con éxito"}, status_code=200)
         else:
             print("Programa o voluntario no encontrado")
-            raise HTTPException(status_code=404, detail="Programa o voluntario no encontrado")
+            return JSONResponse(content={"mensaje": "Programa o voluntario no encontrado"}, status_code=404)
     except Exception as e:
         print(f"Error al unirse a un programa: {str(e)}")
-        raise HTTPException(status_code=500, detail="Error al unirse a un programa")
+        return JSONResponse(content={"error": str(e)}, status_code=500)
 
 # Ruta para eliminar programa por Nombre
 @app.delete('/eliminar-programa', response_class=JSONResponse)
@@ -140,7 +136,7 @@ async def delete_programa(Nombre: str = Form(...)):
         return JSONResponse(content={"mensaje": "Programa eliminado con éxito"}, status_code=200)
     except Exception as e:
         print(f"Error al eliminar programa: {str(e)}")
-        raise HTTPException(status_code=500, detail="Error al eliminar programa")
+        return JSONResponse(content={"error": str(e)}, status_code=500)
 
 # Ruta para mostrar todos los voluntarios
 @app.get('/voluntarios', response_class=JSONResponse)
@@ -154,7 +150,7 @@ async def mostrar_voluntarios():
         return JSONResponse(content={"voluntarios": voluntarios}, status_code=200)
     except Exception as e:
         print(f"Error al obtener voluntarios: {str(e)}")
-        raise HTTPException(status_code=500, detail="Error al obtener voluntarios")
+        return JSONResponse(content={"error": str(e)}, status_code=500)
 
 # Ruta para mostrar todos los programas y los voluntarios que se han unido
 @app.get('/programas', response_class=JSONResponse)
@@ -180,8 +176,9 @@ async def mostrar_programas_con_voluntarios():
         return JSONResponse(content={"programas": programas}, status_code=200)
     except Exception as e:
         print(f"Error al obtener programas con voluntarios: {str(e)}")
-        raise HTTPException(status_code=500, detail="Error al obtener programas con voluntarios")
+        return JSONResponse(content={"error": str(e)}, status_code=500)
 
+# Iniciar la aplicación FastAPI
 if __name__ == '__main__':
     create_voluntarios_table()  # Crear la tabla de voluntarios al iniciar
     create_programas_table()  # Crear la tabla de programas al iniciar
