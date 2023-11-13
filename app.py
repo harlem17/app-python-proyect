@@ -1,4 +1,4 @@
-from fastapi import FastAPI, Request, Form
+from fastapi import FastAPI, Request, Form, HTTPException
 from fastapi.templating import Jinja2Templates
 from fastapi.responses import HTMLResponse, JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
@@ -46,6 +46,19 @@ async def create_programas_table():
     CREATE TABLE IF NOT EXISTS programas (
         nombre TEXT PRIMARY KEY,
         descripcion TEXT
+    )
+    '''
+    await conn.execute(query)
+    await conn.close()
+
+# Crear la tabla 'programa_voluntario' si no existe
+async def create_programa_voluntario_table():
+    conn = await get_database_conn()
+    query = '''
+    CREATE TABLE IF NOT EXISTS programa_voluntario (
+        programa_id TEXT REFERENCES programas(nombre),
+        voluntario_id INTEGER REFERENCES voluntarios(id),
+        PRIMARY KEY (programa_id, voluntario_id)
     )
     '''
     await conn.execute(query)
@@ -182,4 +195,5 @@ async def mostrar_programas_con_voluntarios():
 if __name__ == '__main__':
     create_voluntarios_table()  # Crear la tabla de voluntarios al iniciar
     create_programas_table()  # Crear la tabla de programas al iniciar
+    create_programa_voluntario_table()  # Crear la tabla de programa_voluntario al iniciar
     uvicorn.run('app:app', host='0.0.0.0', port=8000, reload=True)
