@@ -61,12 +61,19 @@ async def index(request: Request):
 @app.post('/create-voluntario', response_class=JSONResponse)
 async def add_voluntario(ID: int = Form(...), Nombre: str = Form(...), Apellido: str = Form(...), Telefono: int = Form(...), Intereses: str = Form(...)):
     try:
+        # Validar la longitud del número de teléfono
+        if len(str(Telefono)) != 10:
+            raise ValueError("El número de teléfono debe tener 10 dígitos.")
+
         conn = await get_database_conn()
         query = 'INSERT INTO voluntarios (id, nombre, apellido, telefono, intereses) VALUES ($1, $2, $3, $4, $5)'
         await conn.execute(query, ID, Nombre, Apellido, Telefono, Intereses)
         await conn.close()
         print("Voluntario agregado con éxito")
         return JSONResponse(content={"mensaje": "Voluntario agregado con éxito"}, status_code=200)
+    except ValueError as ve:
+        print(f"Error al agregar voluntario: {str(ve)}")
+        return JSONResponse(content={"error": str(ve)}, status_code=400)
     except Exception as e:
         print(f"Error al agregar voluntario: {str(e)}")
         return JSONResponse(content={"error": str(e)}, status_code=500)
