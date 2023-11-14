@@ -16,7 +16,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# La URL de conexión a la base de datos PostgreSQL proporcionada por railway
+# La URL de conexión a la base de datos PostgreSQL proporcionada por Render
 db_url = "postgres://postgres:1cBFBFEgCGaAC5da6Cb21Bgdf215FD-C@roundhouse.proxy.rlwy.net:51888/railway"
 
 # Función para obtener la conexión a la base de datos
@@ -37,17 +37,6 @@ async def create_voluntarios_table():
     )
     '''
     await conn.execute(query)
-
-    # Crear la tabla 'programa_voluntario'
-    query_programa_voluntario = '''
-    CREATE TABLE IF NOT EXISTS programa_voluntario (
-        programa_id TEXT REFERENCES programas(nombre),
-        voluntario_id INTEGER REFERENCES voluntarios(id),
-        PRIMARY KEY (programa_id, voluntario_id)
-    )
-    '''
-    await conn.execute(query_programa_voluntario)
-
     await conn.close()
 
 # Crear la tabla 'programas' si no existe
@@ -189,9 +178,8 @@ async def mostrar_programas_con_voluntarios():
         print(f"Error al obtener programas con voluntarios: {str(e)}")
         return JSONResponse(content={"error": str(e)}, status_code=500)
 
-# Otras rutas...
-
+# Iniciar la aplicación FastAPI
 if __name__ == '__main__':
-    create_voluntarios_table()
-    create_programas_table()
+    create_voluntarios_table()  # Crear la tabla de voluntarios al iniciar
+    create_programas_table()  # Crear la tabla de programas al iniciar
     uvicorn.run('app:app', host='0.0.0.0', port=8000, reload=True)
