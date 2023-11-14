@@ -17,7 +17,7 @@ app.add_middleware(
 )
 
 # La URL de conexión a la base de datos PostgreSQL proporcionada por Render
-db_url = "postgres://postgres:1cBFBFEgCGaAC5da6Cb21Bgdf215FD-C@roundhouse.proxy.rlwy.net:51888/railway"
+db_url = "postgres://postgres:c-ffG6cDFCeaAdAgBFdCA4*gf-3DAbEc@monorail.proxy.rlwy.net:10747/railway"
 
 # Función para obtener la conexión a la base de datos
 async def get_database_conn():
@@ -51,14 +51,14 @@ async def create_programas_table():
     await conn.execute(query)
     await conn.close()
 
-# Crear la tabla 'programa_voluntario' si no existe
-async def create_programa_voluntario_table():
+# Crear la tabla de asignaciones si no existe
+async def create_asignaciones_table():
     conn = await get_database_conn()
     query = '''
-    CREATE TABLE IF NOT EXISTS programa_voluntario (
-        programa_id TEXT REFERENCES programas(nombre),
-        voluntario_id INTEGER REFERENCES voluntarios(id),
-        PRIMARY KEY (programa_id, voluntario_id)
+    CREATE TABLE IF NOT EXISTS asignaciones (
+        id SERIAL PRIMARY KEY,
+        programa_nombre TEXT REFERENCES programas(nombre),
+        voluntario_id INTEGER REFERENCES voluntarios(id)
     )
     '''
     await conn.execute(query)
@@ -89,15 +89,8 @@ async def add_voluntario(ID: int = Form(...), Nombre: str = Form(...), Apellido:
 async def delete_voluntario(ID: int = Form(...)):
     try:
         conn = await get_database_conn()
-
-        # Eliminar asignaciones del voluntario en la tabla programa_voluntario
-        query_delete_asignaciones = 'DELETE FROM programa_voluntario WHERE voluntario_id = $1'
-        await conn.execute(query_delete_asignaciones, ID)
-
-        # Eliminar al voluntario
-        query_delete_voluntario = 'DELETE FROM voluntarios WHERE id = $1'
-        await conn.execute(query_delete_voluntario, ID)
-
+        query = 'DELETE FROM voluntarios WHERE id = $1'
+        await conn.execute(query, ID)
         await conn.close()
         print("Voluntario eliminado con éxito")
         return JSONResponse(content={"mensaje": "Voluntario eliminado con éxito"}, status_code=200)
@@ -124,22 +117,30 @@ async def add_programa(nombre: str = Form(...), descripcion: str = Form(...)):
 async def unirse_programa(nombre_programa: str = Form(...), voluntario_id: int = Form(...)):
     try:
         conn = await get_database_conn()
-        query_voluntario = 'SELECT * FROM voluntarios WHERE id = $1'
-        voluntario = await conn.fetch(query_voluntario, voluntario_id)
-        
+
+        # Verificar si el programa existe
         query_programa = 'SELECT * FROM programas WHERE nombre = $1'
         programa = await conn.fetch(query_programa, nombre_programa)
 
-        if voluntario and programa:
-            conn = await get_database_conn()
-            query = 'INSERT INTO programa_voluntario (programa_id, voluntario_id) VALUES ($1, $2)'
-            await conn.execute(query, programa[0]['nombre'], voluntario[0]['id'])
+        if not programa:
             await conn.close()
-            print("Voluntario agregado al programa con éxito")
-            return JSONResponse(content={"mensaje": "Voluntario agregado al programa con éxito"}, status_code=200)
-        else:
-            print("Programa o voluntario no encontrado")
-            return JSONResponse(content={"mensaje": "Programa o voluntario no encontrado"}, status_code=404)
+            return JSONResponse(content={"error": "Programa no encontrado"}, status_code=404)
+
+        # Verificar si el voluntario existe
+        query_voluntario = 'SELECT * FROM voluntarios WHERE id = $1'
+        voluntario = await conn.fetch(query_voluntario, voluntario_id)
+
+        if not voluntario:
+            await conn.close()
+            return JSONResponse(content={"error": "Voluntario no encontrado"}, status_code=404)
+
+        # Agregar la asignación a la tabla de asignaciones
+        query = 'INSERT INTO asignaciones (programa_nombre, voluntario_id) VALUES ($1, $2)'
+        await conn.execute(query, nombre_programa, voluntario_id)
+        await conn.close()
+
+        print("Voluntario asignado al programa con éxito")
+        return JSONResponse(content={"mensaje": "Voluntario asignado al programa con éxito"}, status_code=200)
     except Exception as e:
         print(f"Error al unirse a un programa: {str(e)}")
         return JSONResponse(content={"error": str(e)}, status_code=500)
@@ -149,15 +150,8 @@ async def unirse_programa(nombre_programa: str = Form(...), voluntario_id: int =
 async def delete_programa(Nombre: str = Form(...)):
     try:
         conn = await get_database_conn()
-
-        # Eliminar asignaciones del programa en la tabla programa_voluntario
-        query_delete_asignaciones = 'DELETE FROM programa_voluntario WHERE programa_id = $1'
-        await conn.execute(query_delete_asignaciones, Nombre)
-
-        # Eliminar al programa
-        query_delete_programa = 'DELETE FROM programas WHERE nombre = $1'
-        await conn.execute(query_delete_programa, Nombre)
-
+        query = 'DELETE FROM programas WHERE nombre = $1'
+        await conn.execute(query, Nombre)
         await conn.close()
         print("Programa eliminado con éxito")
         return JSONResponse(content={"mensaje": "Programa eliminado con éxito"}, status_code=200)
@@ -191,7 +185,8 @@ async def mostrar_programas_con_voluntarios():
         for programa_row in programas_result:
             programa = {"nombre": programa_row['nombre'], "descripcion": programa_row['descripcion']}
             
-            query_voluntarios = 'SELECT v.nombre, v.apellido, v.telefono, v.intereses FROM voluntarios v INNER JOIN programa_voluntario pv ON v.id = pv.voluntario_id INNER JOIN programas p ON p.nombre = pv.programa_id WHERE p.nombre = $1'
+            # Obtener voluntarios asignados al programa desde la tabla de asignaciones
+            query_voluntarios = 'SELECT v.nombre, v.apellido, v.telefono, v.intereses FROM voluntarios v INNER JOIN asignaciones a ON v.id = a.voluntario_id WHERE a.programa_nombre = $1'
             voluntarios_result = await conn.fetch(query_voluntarios, programa_row['nombre'])
 
             voluntarios = [{"nombre": v['nombre'], "apellido": v['apellido'], "telefono": v['telefono'], "intereses": v['intereses']} for v in voluntarios_result]
@@ -209,5 +204,5 @@ async def mostrar_programas_con_voluntarios():
 if __name__ == '__main__':
     create_voluntarios_table()  # Crear la tabla de voluntarios al iniciar
     create_programas_table()  # Crear la tabla de programas al iniciar
-    create_programa_voluntario_table()  # Crear la tabla de programa_voluntario al iniciar
+    create_asignaciones_table()  # Crear la tabla de asignaciones al iniciar
     uvicorn.run('app:app', host='0.0.0.0', port=8000, reload=True)
