@@ -105,28 +105,34 @@ async def add_programa(nombre: str = Form(...), descripcion: str = Form(...)):
 async def unirse_programa(nombre_programa: str = Form(...), voluntario_id: int = Form(...)):
     try:
         conn = await get_database_conn()
-        
-        # Verificar si el voluntario y el programa existen
-        query_voluntario = 'SELECT * FROM voluntarios WHERE id = $1'
-        voluntario = await conn.fetch(query_voluntario, voluntario_id)
-        
+
+        # Verificar si el programa existe
         query_programa = 'SELECT * FROM programas WHERE nombre = $1'
         programa = await conn.fetch(query_programa, nombre_programa)
 
-        if voluntario and programa:
-            # Actualizar la columna voluntarios_asignados del programa
-            query_actualizar_programa = 'UPDATE programas SET voluntarios_asignados = array_append(voluntarios_asignados, $1) WHERE nombre = $2'
-            await conn.execute(query_actualizar_programa, voluntario[0]['nombre'], programa[0]['nombre'])
-            
+        if not programa:
             await conn.close()
-            print("Voluntario agregado al programa con éxito")
-            return JSONResponse(content={"mensaje": "Voluntario agregado al programa con éxito"}, status_code=200)
-        else:
-            print("Programa o voluntario no encontrado")
-            return JSONResponse(content={"mensaje": "Programa o voluntario no encontrado"}, status_code=404)
+            return JSONResponse(content={"error": "Programa no encontrado"}, status_code=404)
+
+        # Verificar si el voluntario existe
+        query_voluntario = 'SELECT * FROM voluntarios WHERE id = $1'
+        voluntario = await conn.fetch(query_voluntario, voluntario_id)
+
+        if not voluntario:
+            await conn.close()
+            return JSONResponse(content={"error": "Voluntario no encontrado"}, status_code=404)
+
+        # Agregar el voluntario al programa
+        query = 'INSERT INTO programa_voluntario (programa_id, voluntario_id) VALUES ($1, $2)'
+        await conn.execute(query, nombre_programa, voluntario_id)
+        await conn.close()
+
+        print("Voluntario agregado al programa con éxito")
+        return JSONResponse(content={"mensaje": "Voluntario agregado al programa con éxito"}, status_code=200)
     except Exception as e:
         print(f"Error al unirse a un programa: {str(e)}")
         return JSONResponse(content={"error": str(e)}, status_code=500)
+
 
 # Ruta para eliminar programa por Nombre
 @app.delete('/eliminar-programa', response_class=JSONResponse)
