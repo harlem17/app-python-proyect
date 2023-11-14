@@ -16,7 +16,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# La URL de conexión a la base de datos PostgreSQL proporcionada por Railway
+# La URL de conexión a la base de datos PostgreSQL proporcionada por Render
 db_url = "postgres://postgres:1cBFBFEgCGaAC5da6Cb21Bgdf215FD-C@roundhouse.proxy.rlwy.net:51888/railway"
 
 # Función para obtener la conexión a la base de datos
@@ -45,8 +45,20 @@ async def create_programas_table():
     query = '''
     CREATE TABLE IF NOT EXISTS programas (
         nombre TEXT PRIMARY KEY,
-        descripcion TEXT,
-        voluntarios_asignados TEXT[] DEFAULT '{}'
+        descripcion TEXT
+    )
+    '''
+    await conn.execute(query)
+    await conn.close()
+
+# Crear la tabla de asignaciones si no existe
+async def create_asignaciones_table():
+    conn = await get_database_conn()
+    query = '''
+    CREATE TABLE IF NOT EXISTS asignaciones (
+        id SERIAL PRIMARY KEY,
+        programa_nombre TEXT REFERENCES programas(nombre),
+        voluntario_id INTEGER REFERENCES voluntarios(id)
     )
     '''
     await conn.execute(query)
@@ -99,7 +111,7 @@ async def add_programa(nombre: str = Form(...), descripcion: str = Form(...)):
     except Exception as e:
         print(f"Error al agregar programa: {str(e)}")
         return JSONResponse(content={"error": str(e)}, status_code=500)
-        
+
 # Ruta para que los voluntarios se unan a un programa
 @app.post('/unirse-programa', response_class=JSONResponse)
 async def unirse_programa(nombre_programa: str = Form(...), voluntario_id: int = Form(...)):
@@ -122,13 +134,13 @@ async def unirse_programa(nombre_programa: str = Form(...), voluntario_id: int =
             await conn.close()
             return JSONResponse(content={"error": "Voluntario no encontrado"}, status_code=404)
 
-        # Agregar el voluntario al programa
-        query = 'INSERT INTO programa_voluntario (programa_id, voluntario_id) VALUES ($1, $2)'
+        # Agregar la asignación a la tabla de asignaciones
+        query = 'INSERT INTO asignaciones (programa_nombre, voluntario_id) VALUES ($1, $2)'
         await conn.execute(query, nombre_programa, voluntario_id)
         await conn.close()
 
-        print("Voluntario agregado al programa con éxito")
-        return JSONResponse(content={"mensaje": "Voluntario agregado al programa con éxito"}, status_code=200)
+        print("Voluntario asignado al programa con éxito")
+        return JSONResponse(content={"mensaje": "Voluntario asignado al programa con éxito"}, status_code=200)
     except Exception as e:
         print(f"Error al unirse a un programa: {str(e)}")
         return JSONResponse(content={"error": str(e)}, status_code=500)
@@ -161,24 +173,36 @@ async def mostrar_voluntarios():
         print(f"Error al obtener voluntarios: {str(e)}")
         return JSONResponse(content={"error": str(e)}, status_code=500)
 
-# Ruta para mostrar todos los programas (sin voluntarios asignados)
+# Ruta para mostrar todos los programas y los voluntarios que se han unido
 @app.get('/programas', response_class=JSONResponse)
-async def mostrar_programas_sin_voluntarios():
+async def mostrar_programas_con_voluntarios():
     try:
         conn = await get_database_conn()
-        query_programas = 'SELECT nombre, descripcion FROM programas'
+        query_programas = 'SELECT * FROM programas'
         programas_result = await conn.fetch(query_programas)
 
-        programas = [{"nombre": row['nombre'], "descripcion": row['descripcion']} for row in programas_result]
-        
+        programas = []
+        for programa_row in programas_result:
+            programa = {"nombre": programa_row['nombre'], "descripcion": programa_row['descripcion']}
+            
+            # Obtener voluntarios asignados al programa desde la tabla de asignaciones
+            query_voluntarios = 'SELECT v.nombre, v.apellido, v.telefono, v.intereses FROM voluntarios v INNER JOIN asignaciones a ON v.id = a.voluntario_id WHERE a.programa_nombre = $1'
+            voluntarios_result = await conn.fetch(query_voluntarios, programa_row['nombre'])
+
+            voluntarios = [{"nombre": v['nombre'], "apellido": v['apellido'], "telefono": v['telefono'], "intereses": v['intereses']} for v in voluntarios_result]
+            programa["voluntarios"] = voluntarios
+
+            programas.append(programa)
+
         await conn.close()
         return JSONResponse(content={"programas": programas}, status_code=200)
     except Exception as e:
-        print(f"Error al obtener programas: {str(e)}")
+        print(f"Error al obtener programas con voluntarios: {str(e)}")
         return JSONResponse(content={"error": str(e)}, status_code=500)
 
 # Iniciar la aplicación FastAPI
 if __name__ == '__main__':
     create_voluntarios_table()  # Crear la tabla de voluntarios al iniciar
     create_programas_table()  # Crear la tabla de programas al iniciar
+    create_asignaciones_table()  # Crear la tabla de asignaciones al iniciar
     uvicorn.run('app:app', host='0.0.0.0', port=8000, reload=True)
