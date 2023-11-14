@@ -106,31 +106,6 @@ async def add_programa(nombre: str = Form(...), descripcion: str = Form(...)):
         print(f"Error al agregar programa: {str(e)}")
         return JSONResponse(content={"error": str(e)}, status_code=500)
 
-# Ruta para que los voluntarios se unan a un programa
-@app.post('/unirse-programa', response_class=JSONResponse)
-async def unirse_programa(nombre_programa: str = Form(...), voluntario_id: int = Form(...)):
-    try:
-        conn = await get_database_conn()
-        query_voluntario = 'SELECT * FROM voluntarios WHERE id = $1'
-        voluntario = await conn.fetch(query_voluntario, voluntario_id)
-        
-        query_programa = 'SELECT * FROM programas WHERE nombre = $1'
-        programa = await conn.fetch(query_programa, nombre_programa)
-
-        if voluntario and programa:
-            conn = await get_database_conn()
-            query = 'INSERT INTO programa_voluntario (programa_id, voluntario_id) VALUES ($1, $2)'
-            await conn.execute(query, programa[0]['nombre'], voluntario[0]['id'])
-            await conn.close()
-            print("Voluntario agregado al programa con éxito")
-            return JSONResponse(content={"mensaje": "Voluntario agregado al programa con éxito"}, status_code=200)
-        else:
-            print("Programa o voluntario no encontrado")
-            return JSONResponse(content={"mensaje": "Programa o voluntario no encontrado"}, status_code=404)
-    except Exception as e:
-        print(f"Error al unirse a un programa: {str(e)}")
-        return JSONResponse(content={"error": str(e)}, status_code=500)
-
 # Ruta para eliminar programa por Nombre
 @app.delete('/eliminar-programa', response_class=JSONResponse)
 async def delete_programa(Nombre: str = Form(...)):
@@ -159,30 +134,20 @@ async def mostrar_voluntarios():
         print(f"Error al obtener voluntarios: {str(e)}")
         return JSONResponse(content={"error": str(e)}, status_code=500)
 
-# Ruta para mostrar todos los programas y los voluntarios que se han unido
+# Ruta para mostrar todos los programas
 @app.get('/programas', response_class=JSONResponse)
-async def mostrar_programas_con_voluntarios():
+async def mostrar_programas():
     try:
         conn = await get_database_conn()
         query_programas = 'SELECT * FROM programas'
         programas_result = await conn.fetch(query_programas)
 
-        programas = []
-        for programa_row in programas_result:
-            programa = {"nombre": programa_row['nombre'], "descripcion": programa_row['descripcion']}
-            
-            query_voluntarios = 'SELECT v.nombre, v.apellido, v.telefono, v.intereses FROM voluntarios v INNER JOIN programa_voluntario pv ON v.id = pv.voluntario_id INNER JOIN programas p ON p.nombre = pv.programa_id WHERE p.nombre = $1'
-            voluntarios_result = await conn.fetch(query_voluntarios, programa_row['nombre'])
-
-            voluntarios = [{"nombre": v['nombre'], "apellido": v['apellido'], "telefono": v['telefono'], "intereses": v['intereses']} for v in voluntarios_result]
-            programa["voluntarios"] = voluntarios
-
-            programas.append(programa)
+        programas = [{"nombre": programa_row['nombre'], "descripcion": programa_row['descripcion']} for programa_row in programas_result]
 
         await conn.close()
         return JSONResponse(content={"programas": programas}, status_code=200)
     except Exception as e:
-        print(f"Error al obtener programas con voluntarios: {str(e)}")
+        print(f"Error al obtener programas: {str(e)}")
         return JSONResponse(content={"error": str(e)}, status_code=500)
 
 # Iniciar la aplicación FastAPI
