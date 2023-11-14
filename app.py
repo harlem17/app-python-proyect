@@ -32,7 +32,7 @@ async def create_voluntarios_table():
         id SERIAL PRIMARY KEY,
         nombre TEXT NOT NULL,
         apellido TEXT NOT NULL,
-        telefono INTEGER NOT NULL,
+        telefono BIGINT NOT NULL,  -- Cambiado a BIGINT
         intereses TEXT
     )
     '''
