@@ -156,31 +156,20 @@ async def mostrar_voluntarios():
         print(f"Error al obtener voluntarios: {str(e)}")
         return JSONResponse(content={"error": str(e)}, status_code=500)
 
-# Ruta para mostrar todos los programas y los voluntarios que se han unido
+# Ruta para mostrar todos los programas (sin voluntarios asignados)
 @app.get('/programas', response_class=JSONResponse)
-async def mostrar_programas_con_voluntarios():
+async def mostrar_programas_sin_voluntarios():
     try:
         conn = await get_database_conn()
-        query_programas = 'SELECT * FROM programas'
+        query_programas = 'SELECT nombre, descripcion FROM programas'
         programas_result = await conn.fetch(query_programas)
 
-        programas = []
-        for programa_row in programas_result:
-            programa = {"nombre": programa_row['nombre'], "descripcion": programa_row['descripcion']}
-
-            # Obtener información de voluntarios asignados
-            query_voluntarios = 'SELECT id, nombre, apellido, telefono, intereses FROM voluntarios WHERE id = ANY($1::integer[])'
-            voluntarios_result = await conn.fetch(query_voluntarios, programa_row['voluntarios_asignados'])
-
-            voluntarios = [{"ID": v['id'], "Nombre": v['nombre'], "Apellido": v['apellido'], "Telefono": v['telefono'], "Intereses": v['intereses']} for v in voluntarios_result]
-            programa["voluntarios"] = voluntarios
-
-            programas.append(programa)
-
+        programas = [{"nombre": row['nombre'], "descripcion": row['descripcion']} for row in programas_result]
+        
         await conn.close()
         return JSONResponse(content={"programas": programas}, status_code=200)
     except Exception as e:
-        print(f"Error al obtener programas con voluntarios: {str(e)}")
+        print(f"Error al obtener programas: {str(e)}")
         return JSONResponse(content={"error": str(e)}, status_code=500)
 
 # Iniciar la aplicación FastAPI
