@@ -120,6 +120,34 @@ async def delete_programa(Nombre: str = Form(...)):
         print(f"Error al eliminar programa: {str(e)}")
         return JSONResponse(content={"error": str(e)}, status_code=500)
 
+# Ruta para que los voluntarios se unan a un programa
+@app.post('/unirse-programa', response_class=JSONResponse)
+async def unirse_programa(nombre_programa: str = Form(...), voluntario_id: int = Form(...)):
+    try:
+        conn = await get_database_conn()
+        
+        # Verificar si el voluntario y el programa existen
+        query_voluntario = 'SELECT * FROM voluntarios WHERE id = $1'
+        voluntario = await conn.fetch(query_voluntario, voluntario_id)
+        
+        query_programa = 'SELECT * FROM programas WHERE nombre = $1'
+        programa = await conn.fetch(query_programa, nombre_programa)
+
+        if voluntario and programa:
+            # Agregar el programa al campo "intereses" del voluntario
+            query_actualizar_voluntario = 'UPDATE voluntarios SET intereses = COALESCE(intereses, \'\') || $1 WHERE id = $2'
+            await conn.execute(query_actualizar_voluntario, f', {programa[0]["nombre"]}', voluntario[0]['id'])
+            
+            await conn.close()
+            print("Voluntario agregado al programa con éxito")
+            return JSONResponse(content={"mensaje": "Voluntario agregado al programa con éxito"}, status_code=200)
+        else:
+            print("Programa o voluntario no encontrado")
+            return JSONResponse(content={"mensaje": "Programa o voluntario no encontrado"}, status_code=404)
+    except Exception as e:
+        print(f"Error al unirse a un programa: {str(e)}")
+        return JSONResponse(content={"error": str(e)}, status_code=500)
+
 # Ruta para mostrar todos los voluntarios
 @app.get('/voluntarios', response_class=JSONResponse)
 async def mostrar_voluntarios():
