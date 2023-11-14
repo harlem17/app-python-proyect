@@ -76,7 +76,7 @@ async def add_voluntario(ID: int = Form(...), Nombre: str = Form(...), Apellido:
     try:
         conn = await get_database_conn()
         query = 'INSERT INTO voluntarios (id, nombre, apellido, telefono, intereses) VALUES ($1, $2, $3, $4, $5)'
-        await conn.execute(query, ID, Nombre, Apellido, int(Telefono), Intereses)
+        await conn.execute(query, ID, Nombre, Apellido, Telefono, Intereses)
         await conn.close()
         print("Voluntario agregado con éxito")
         return JSONResponse(content={"mensaje": "Voluntario agregado con éxito"}, status_code=200)
