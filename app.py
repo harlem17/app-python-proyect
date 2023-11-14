@@ -46,7 +46,7 @@ async def create_programas_table():
     CREATE TABLE IF NOT EXISTS programas (
         nombre TEXT PRIMARY KEY,
         descripcion TEXT,
-        voluntarios_asignados INTEGER[] DEFAULT '{}'
+        voluntarios_asignados TEXT[] DEFAULT '{}'
     )
     '''
     await conn.execute(query)
