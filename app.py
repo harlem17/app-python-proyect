@@ -150,8 +150,15 @@ async def unirse_programa(nombre_programa: str = Form(...), voluntario_id: int =
 async def delete_programa(Nombre: str = Form(...)):
     try:
         conn = await get_database_conn()
-        query = 'DELETE FROM programas WHERE nombre = $1'
-        await conn.execute(query, Nombre)
+
+        # Eliminar asignaciones del programa en la tabla de asignaciones
+        query_delete_asignaciones = 'DELETE FROM asignaciones WHERE programa_nombre = $1'
+        await conn.execute(query_delete_asignaciones, Nombre)
+
+        # Eliminar al programa
+        query_delete_programa = 'DELETE FROM programas WHERE nombre = $1'
+        await conn.execute(query_delete_programa, Nombre)
+
         await conn.close()
         print("Programa eliminado con éxito")
         return JSONResponse(content={"mensaje": "Programa eliminado con éxito"}, status_code=200)
