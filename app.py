@@ -17,7 +17,7 @@ app.add_middleware(
 )
 
 # La URL de conexión a la base de datos PostgreSQL proporcionada por Render
-db_url = "postgres://postgres:2DC3D6Fag5FE--cAb2gF6GDbAb-C5ceA@roundhouse.proxy.rlwy.net:24927/railway"
+db_url = "postgres://postgres:c*FAg-*GdG1CDCb-CGDfeDD2c3dgfd52@monorail.proxy.rlwy.net:39298/railway"
 
 # Función para obtener la conexión a la base de datos
 async def get_database_conn():
