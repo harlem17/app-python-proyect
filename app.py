@@ -64,6 +64,23 @@ async def create_asignaciones_table():
     await conn.execute(query)
     await conn.close()
 
+# Crear la tabla de donaciones si no existe
+async def create_donaciones_table():
+    conn = await get_database_conn()
+    query = '''
+    CREATE TABLE IF NOT EXISTS donaciones (
+        id SERIAL PRIMARY KEY,
+        cedula TEXT NOT NULL,
+        nombre TEXT NOT NULL,
+        apellido TEXT NOT NULL,
+        ciudad TEXT NOT NULL,
+        programa_nombre TEXT REFERENCES programas(nombre),
+        monto FLOAT NOT NULL
+    )
+    '''
+    await conn.execute(query)
+    await conn.close()
+
 # Ruta para mostrar la página principal
 @app.get("/", response_class=HTMLResponse)
 async def index(request: Request):
@@ -206,10 +223,46 @@ async def mostrar_programas_con_voluntarios():
     except Exception as e:
         print(f"Error al obtener programas con voluntarios: {str(e)}")
         return JSONResponse(content={"error": str(e)}, status_code=500)
+        
+# Ruta para registrar donaciones
+@app.post('/registrar-donacion', response_class=JSONResponse)
+async def registrar_donacion(
+    Cedula: str = Form(...),
+    NombreDonante: str = Form(...),
+    ApellidoDonante: str = Form(...),
+    CiudadResidencia: str = Form(...),
+    ProgramaDonacion: str = Form(...),
+    MontoDonacion: float = Form(...),
+):
+    try:
+        conn = await get_database_conn()
+
+        # Verificar si el programa existe
+        query_programa = 'SELECT * FROM programas WHERE nombre = $1'
+        programa = await conn.fetch(query_programa, ProgramaDonacion)
+
+        if not programa:
+            await conn.close()
+            return JSONResponse(content={"error": "Programa no encontrado"}, status_code=404)
+
+        # Insertar la donación en la tabla de donaciones
+        query = '''
+            INSERT INTO donaciones (cedula, nombre, apellido, ciudad, programa_nombre, monto)
+            VALUES ($1, $2, $3, $4, $5, $6)
+        '''
+        await conn.execute(query, Cedula, NombreDonante, ApellidoDonante, CiudadResidencia, ProgramaDonacion, MontoDonacion)
+        await conn.close()
+
+        print("Donación registrada con éxito")
+        return JSONResponse(content={"mensaje": "Donación registrada con éxito"}, status_code=200)
+    except Exception as e:
+        print(f"Error al registrar donación: {str(e)}")
+        return JSONResponse(content={"error": str(e)}, status_code=500)
 
 # Iniciar la aplicación FastAPI
 if __name__ == '__main__':
     create_voluntarios_table()  # Crear la tabla de voluntarios al iniciar
     create_programas_table()  # Crear la tabla de programas al iniciar
     create_asignaciones_table()  # Crear la tabla de asignaciones al iniciar
+    create_donaciones_table()  # Crear la tabla de donaciones al iniciar
     uvicorn.run('app:app', host='0.0.0.0', port=8000, reload=True)
