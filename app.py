@@ -259,6 +259,65 @@ async def registrar_donacion(
         print(f"Error al registrar donación: {str(e)}")
         return JSONResponse(content={"error": str(e)}, status_code=500)
 
+# Ruta para mostrar todas las donaciones
+@app.get('/donaciones', response_class=JSONResponse)
+async def mostrar_donaciones():
+    try:
+        conn = await get_database_conn()
+        query = 'SELECT * FROM donaciones'
+        result = await conn.fetch(query)
+        donaciones = [{"ID": row['id'], "Cedula": row['cedula'], "Nombre": row['nombre'], "Apellido": row['apellido'],
+                       "Ciudad": row['ciudad'], "Programa": row['programa'], "Monto": row['monto']} for row in result]
+        await conn.close()
+        return JSONResponse(content={"donaciones": donaciones}, status_code=200)
+    except Exception as e:
+        print(f"Error al obtener donaciones: {str(e)}")
+        return JSONResponse(content={"error": str(e)}, status_code=500)
+        
+# Ruta para buscar una donación por ID
+@app.get('/donacion/{donacion_id}', response_class=JSONResponse)
+async def buscar_donacion(donacion_id: int):
+    try:
+        conn = await get_database_conn()
+        query = 'SELECT * FROM donaciones WHERE id = $1'
+        result = await conn.fetch(query, donacion_id)
+
+        if not result:
+            await conn.close()
+            return JSONResponse(content={"error": "Donación no encontrada"}, status_code=404)
+
+        donacion = {
+            "ID": result[0]['id'],
+            "Cedula": result[0]['cedula'],
+            "Nombre": result[0]['nombre'],
+            "Apellido": result[0]['apellido'],
+            "Ciudad": result[0]['ciudad'],
+            "Programa": result[0]['programa_nombre'],
+            "Monto": result[0]['monto']
+        }
+
+        await conn.close()
+        return JSONResponse(content={"donacion": donacion}, status_code=200)
+    except Exception as e:
+        print(f"Error al buscar donación: {str(e)}")
+        return JSONResponse(content={"error": str(e)}, status_code=500)
+        
+# Ruta para eliminar una donación por ID
+@app.delete('/eliminar-donacion/{donacion_id}', response_class=JSONResponse)
+async def eliminar_donacion(donacion_id: int):
+    try:
+        conn = await get_database_conn()
+
+        # Eliminar la donación
+        query = 'DELETE FROM donaciones WHERE id = $1'
+        await conn.execute(query, donacion_id)
+
+        await conn.close()
+        print("Donación eliminada con éxito")
+        return JSONResponse(content={"mensaje": "Donación eliminada con éxito"}, status_code=200)
+    except Exception as e:
+        print(f"Error al eliminar donación: {str(e)}")
+        return JSONResponse(content={"error": str(e)}, status_code=500)
 if __name__ == '__main__':
     create_voluntarios_table()  # Crear la tabla de voluntarios al iniciar
     create_programas_table()  # Crear la tabla de programas al iniciar
