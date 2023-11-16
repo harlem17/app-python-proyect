@@ -259,7 +259,6 @@ async def registrar_donacion(
         print(f"Error al registrar donación: {str(e)}")
         return JSONResponse(content={"error": str(e)}, status_code=500)
 
-# Iniciar la aplicación FastAPI
 if __name__ == '__main__':
     create_voluntarios_table()  # Crear la tabla de voluntarios al iniciar
     create_programas_table()  # Crear la tabla de programas al iniciar
