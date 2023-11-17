@@ -100,21 +100,7 @@ async def add_voluntario(ID: int = Form(...), Nombre: str = Form(...), Apellido:
     except Exception as e:
         print(f"Error al agregar voluntario: {str(e)}")
         return JSONResponse(content={"error": str(e)}, status_code=500)
-
-# Ruta para eliminar voluntario por ID
-@app.delete('/eliminar-voluntario', response_class=JSONResponse)
-async def delete_voluntario(ID: int = Form(...)):
-    try:
-        conn = await get_database_conn()
-        query = 'DELETE FROM voluntarios WHERE id = $1'
-        await conn.execute(query, ID)
-        await conn.close()
-        print("Voluntario eliminado con éxito")
-        return JSONResponse(content={"mensaje": "Voluntario eliminado con éxito"}, status_code=200)
-    except Exception as e:
-        print(f"Error al eliminar voluntario: {str(e)}")
-        return JSONResponse(content={"error": str(e)}, status_code=500)
-
+        
 # Ruta para registrar un programa
 @app.post('/create-programa', response_class=JSONResponse)
 async def add_programa(nombre: str = Form(...), descripcion: str = Form(...)):
@@ -127,101 +113,6 @@ async def add_programa(nombre: str = Form(...), descripcion: str = Form(...)):
         return JSONResponse(content={"mensaje": "Programa agregado con éxito"}, status_code=200)
     except Exception as e:
         print(f"Error al agregar programa: {str(e)}")
-        return JSONResponse(content={"error": str(e)}, status_code=500)
-
-# Ruta para que los voluntarios se unan a un programa
-@app.post('/unirse-programa', response_class=JSONResponse)
-async def unirse_programa(nombre_programa: str = Form(...), voluntario_id: int = Form(...)):
-    try:
-        conn = await get_database_conn()
-
-        # Verificar si el programa existe
-        query_programa = 'SELECT * FROM programas WHERE nombre = $1'
-        programa = await conn.fetch(query_programa, nombre_programa)
-
-        if not programa:
-            await conn.close()
-            return JSONResponse(content={"error": "Programa no encontrado"}, status_code=404)
-
-        # Verificar si el voluntario existe
-        query_voluntario = 'SELECT * FROM voluntarios WHERE id = $1'
-        voluntario = await conn.fetch(query_voluntario, voluntario_id)
-
-        if not voluntario:
-            await conn.close()
-            return JSONResponse(content={"error": "Voluntario no encontrado"}, status_code=404)
-
-        # Agregar la asignación a la tabla de asignaciones
-        query = 'INSERT INTO asignaciones (programa_nombre, voluntario_id) VALUES ($1, $2)'
-        await conn.execute(query, nombre_programa, voluntario_id)
-        await conn.close()
-
-        print("Voluntario asignado al programa con éxito")
-        return JSONResponse(content={"mensaje": "Voluntario asignado al programa con éxito"}, status_code=200)
-    except Exception as e:
-        print(f"Error al unirse a un programa: {str(e)}")
-        return JSONResponse(content={"error": str(e)}, status_code=500)
-
-# Ruta para eliminar programa por Nombre
-@app.delete('/eliminar-programa', response_class=JSONResponse)
-async def delete_programa(Nombre: str = Form(...)):
-    try:
-        conn = await get_database_conn()
-
-        # Eliminar asignaciones del programa en la tabla de asignaciones
-        query_delete_asignaciones = 'DELETE FROM asignaciones WHERE programa_nombre = $1'
-        await conn.execute(query_delete_asignaciones, Nombre)
-
-        # Eliminar al programa
-        query_delete_programa = 'DELETE FROM programas WHERE nombre = $1'
-        await conn.execute(query_delete_programa, Nombre)
-
-        await conn.close()
-        print("Programa eliminado con éxito")
-        return JSONResponse(content={"mensaje": "Programa eliminado con éxito"}, status_code=200)
-    except Exception as e:
-        print(f"Error al eliminar programa: {str(e)}")
-        return JSONResponse(content={"error": str(e)}, status_code=500)
-
-# Ruta para mostrar todos los voluntarios
-@app.get('/voluntarios', response_class=JSONResponse)
-async def mostrar_voluntarios():
-    try:
-        conn = await get_database_conn()
-        query = 'SELECT * FROM voluntarios'
-        result = await conn.fetch(query)
-        voluntarios = [{"ID": row['id'], "Nombre": row['nombre'], "Apellido": row['apellido'], "Telefono": row['telefono'], "Intereses": row['intereses']} for row in result]
-        await conn.close()
-        return JSONResponse(content={"voluntarios": voluntarios}, status_code=200)
-    except Exception as e:
-        print(f"Error al obtener voluntarios: {str(e)}")
-        return JSONResponse(content={"error": str(e)}, status_code=500)
-        
-# Ruta para mostrar todos los programas y los voluntarios que se han unido
-@app.get('/programas', response_class=JSONResponse)
-async def mostrar_programas_con_voluntarios():
-    try:
-        conn = await get_database_conn()
-        query_programas = 'SELECT * FROM programas'
-        programas_result = await conn.fetch(query_programas)
-
-        programas = []
-        for programa_row in programas_result:
-            programa = {"nombre": programa_row['nombre'], "descripcion": programa_row['descripcion']}
-            
-            # Obtener voluntarios asignados al programa desde la tabla de asignaciones
-            query_voluntarios = 'SELECT v.nombre, v.apellido, v.telefono, v.intereses FROM voluntarios v INNER JOIN asignaciones a ON v.id = a.voluntario_id WHERE a.programa_nombre = $1'
-            voluntarios_result = await conn.fetch(query_voluntarios, programa_row['nombre'])
-
-            voluntarios = [{"nombre": v['nombre'], "apellido": v['apellido'], "telefono": v['telefono'], "intereses": v['intereses']} for v in voluntarios_result]
-            programa["voluntarios"] = voluntarios
-
-            programas.append(programa)
-
-        await conn.close()
-        return JSONResponse(content={"programas": programas}, status_code=200)
-    except Exception as e:
-        print(f"Error al obtener programas con voluntarios: {str(e)}")
         return JSONResponse(content={"error": str(e)}, status_code=500)
         
 # Ruta para registrar donaciones
@@ -259,6 +150,47 @@ async def registrar_donacion(
         print(f"Error al registrar donación: {str(e)}")
         return JSONResponse(content={"error": str(e)}, status_code=500)
 
+# Ruta para mostrar todos los voluntarios
+@app.get('/voluntarios', response_class=JSONResponse)
+async def mostrar_voluntarios():
+    try:
+        conn = await get_database_conn()
+        query = 'SELECT * FROM voluntarios'
+        result = await conn.fetch(query)
+        voluntarios = [{"ID": row['id'], "Nombre": row['nombre'], "Apellido": row['apellido'], "Telefono": row['telefono'], "Intereses": row['intereses']} for row in result]
+        await conn.close()
+        return JSONResponse(content={"voluntarios": voluntarios}, status_code=200)
+    except Exception as e:
+        print(f"Error al obtener voluntarios: {str(e)}")
+        return JSONResponse(content={"error": str(e)}, status_code=500)
+
+# Ruta para mostrar todos los programas y los voluntarios que se han unido
+@app.get('/programas', response_class=JSONResponse)
+async def mostrar_programas_con_voluntarios():
+    try:
+        conn = await get_database_conn()
+        query_programas = 'SELECT * FROM programas'
+        programas_result = await conn.fetch(query_programas)
+
+        programas = []
+        for programa_row in programas_result:
+            programa = {"nombre": programa_row['nombre'], "descripcion": programa_row['descripcion']}
+            
+            # Obtener voluntarios asignados al programa desde la tabla de asignaciones
+            query_voluntarios = 'SELECT v.nombre, v.apellido, v.telefono, v.intereses FROM voluntarios v INNER JOIN asignaciones a ON v.id = a.voluntario_id WHERE a.programa_nombre = $1'
+            voluntarios_result = await conn.fetch(query_voluntarios, programa_row['nombre'])
+
+            voluntarios = [{"nombre": v['nombre'], "apellido": v['apellido'], "telefono": v['telefono'], "intereses": v['intereses']} for v in voluntarios_result]
+            programa["voluntarios"] = voluntarios
+
+            programas.append(programa)
+
+        await conn.close()
+        return JSONResponse(content={"programas": programas}, status_code=200)
+    except Exception as e:
+        print(f"Error al obtener programas con voluntarios: {str(e)}")
+        return JSONResponse(content={"error": str(e)}, status_code=500)
+        
 # Ruta para mostrar todas las donaciones
 @app.get('/donaciones', response_class=JSONResponse)
 async def mostrar_donaciones():
@@ -301,6 +233,91 @@ async def mostrar_donaciones():
         print(f"Error al obtener donaciones: {str(e)}")
         return JSONResponse(content={"error": str(e)}, status_code=500)
         
+# Ruta para eliminar voluntario por ID
+@app.delete('/eliminar-voluntario', response_class=JSONResponse)
+async def delete_voluntario(ID: int = Form(...)):
+    try:
+        conn = await get_database_conn()
+        query = 'DELETE FROM voluntarios WHERE id = $1'
+        await conn.execute(query, ID)
+        await conn.close()
+        print("Voluntario eliminado con éxito")
+        return JSONResponse(content={"mensaje": "Voluntario eliminado con éxito"}, status_code=200)
+    except Exception as e:
+        print(f"Error al eliminar voluntario: {str(e)}")
+        return JSONResponse(content={"error": str(e)}, status_code=500)
+
+# Ruta para eliminar programa por Nombre
+@app.delete('/eliminar-programa', response_class=JSONResponse)
+async def delete_programa(Nombre: str = Form(...)):
+    try:
+        conn = await get_database_conn()
+
+        # Eliminar asignaciones del programa en la tabla de asignaciones
+        query_delete_asignaciones = 'DELETE FROM asignaciones WHERE programa_nombre = $1'
+        await conn.execute(query_delete_asignaciones, Nombre)
+
+        # Eliminar al programa
+        query_delete_programa = 'DELETE FROM programas WHERE nombre = $1'
+        await conn.execute(query_delete_programa, Nombre)
+
+        await conn.close()
+        print("Programa eliminado con éxito")
+        return JSONResponse(content={"mensaje": "Programa eliminado con éxito"}, status_code=200)
+    except Exception as e:
+        print(f"Error al eliminar programa: {str(e)}")
+        return JSONResponse(content={"error": str(e)}, status_code=500)
+
+# Ruta para eliminar una donación por ID
+@app.delete('/eliminar-donacion/{donacion_id}', response_class=JSONResponse)
+async def eliminar_donacion(donacion_id: int):
+    try:
+        conn = await get_database_conn()
+
+        # Eliminar la donación
+        query = 'DELETE FROM donaciones WHERE id = $1'
+        await conn.execute(query, donacion_id)
+
+        await conn.close()
+        print("Donación eliminada con éxito")
+        return JSONResponse(content={"mensaje": "Donación eliminada con éxito"}, status_code=200)
+    except Exception as e:
+        print(f"Error al eliminar donación: {str(e)}")
+        return JSONResponse(content={"error": str(e)}, status_code=500)
+        
+# Ruta para que los voluntarios se unan a un programa
+@app.post('/unirse-programa', response_class=JSONResponse)
+async def unirse_programa(nombre_programa: str = Form(...), voluntario_id: int = Form(...)):
+    try:
+        conn = await get_database_conn()
+
+        # Verificar si el programa existe
+        query_programa = 'SELECT * FROM programas WHERE nombre = $1'
+        programa = await conn.fetch(query_programa, nombre_programa)
+
+        if not programa:
+            await conn.close()
+            return JSONResponse(content={"error": "Programa no encontrado"}, status_code=404)
+
+        # Verificar si el voluntario existe
+        query_voluntario = 'SELECT * FROM voluntarios WHERE id = $1'
+        voluntario = await conn.fetch(query_voluntario, voluntario_id)
+
+        if not voluntario:
+            await conn.close()
+            return JSONResponse(content={"error": "Voluntario no encontrado"}, status_code=404)
+
+        # Agregar la asignación a la tabla de asignaciones
+        query = 'INSERT INTO asignaciones (programa_nombre, voluntario_id) VALUES ($1, $2)'
+        await conn.execute(query, nombre_programa, voluntario_id)
+        await conn.close()
+
+        print("Voluntario asignado al programa con éxito")
+        return JSONResponse(content={"mensaje": "Voluntario asignado al programa con éxito"}, status_code=200)
+    except Exception as e:
+        print(f"Error al unirse a un programa: {str(e)}")
+        return JSONResponse(content={"error": str(e)}, status_code=500)
+        
 # Ruta para buscar una donación por ID
 @app.get('/donacion/{donacion_id}', response_class=JSONResponse)
 async def buscar_donacion(donacion_id: int):
@@ -327,23 +344,6 @@ async def buscar_donacion(donacion_id: int):
         return JSONResponse(content={"donacion": donacion}, status_code=200)
     except Exception as e:
         print(f"Error al buscar donación: {str(e)}")
-        return JSONResponse(content={"error": str(e)}, status_code=500)
-        
-# Ruta para eliminar una donación por ID
-@app.delete('/eliminar-donacion/{donacion_id}', response_class=JSONResponse)
-async def eliminar_donacion(donacion_id: int):
-    try:
-        conn = await get_database_conn()
-
-        # Eliminar la donación
-        query = 'DELETE FROM donaciones WHERE id = $1'
-        await conn.execute(query, donacion_id)
-
-        await conn.close()
-        print("Donación eliminada con éxito")
-        return JSONResponse(content={"mensaje": "Donación eliminada con éxito"}, status_code=200)
-    except Exception as e:
-        print(f"Error al eliminar donación: {str(e)}")
         return JSONResponse(content={"error": str(e)}, status_code=500)
         
 if __name__ == '__main__':
