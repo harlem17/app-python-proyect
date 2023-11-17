@@ -264,12 +264,17 @@ async def registrar_donacion(
 async def mostrar_donaciones():
     try:
         conn = await get_database_conn()
-        query = 'SELECT * FROM donaciones'
-        result = await conn.fetch(query)
+        query_donaciones = 'SELECT * FROM donaciones'
+        donaciones_result = await conn.fetch(query_donaciones)
+
+        # Calcular el monto total
+        monto_total = sum(d['monto'] for d in donaciones_result)
+
         donaciones = [{"ID": row['id'], "Cedula": row['cedula'], "Nombre": row['nombre'], "Apellido": row['apellido'],
-                       "Ciudad": row['ciudad'], "Programa": row['programa'], "Monto": row['monto']} for row in result]
+                       "Ciudad": row['ciudad'], "Programa": row['programa'], "Monto": row['monto']} for row in donaciones_result]
+
         await conn.close()
-        return JSONResponse(content={"donaciones": donaciones}, status_code=200)
+        return JSONResponse(content={"donaciones": donaciones, "monto_total": monto_total}, status_code=200)
     except Exception as e:
         print(f"Error al obtener donaciones: {str(e)}")
         return JSONResponse(content={"error": str(e)}, status_code=500)
