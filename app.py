@@ -191,7 +191,7 @@ async def mostrar_programas_con_voluntarios():
         print(f"Error al obtener programas con voluntarios: {str(e)}")
         return JSONResponse(content={"error": str(e)}, status_code=500)
         
-# Ruta para mostrar todas las donaciones
+# Ruta para mostrar todas las donaciones consolidadas por programa
 @app.get('/donaciones', response_class=JSONResponse)
 async def mostrar_donaciones_agrupadas():
     try:
@@ -204,7 +204,7 @@ async def mostrar_donaciones_agrupadas():
 
         for row in donaciones_result:
             programa_nombre = row['programa_nombre']
-            monto = row['monto']  # Posible origen del error
+            monto = row['monto']
 
             # Agregar el monto a la suma total
             monto_total += monto
@@ -215,13 +215,12 @@ async def mostrar_donaciones_agrupadas():
             else:
                 # Si no existe, agregar la donación
                 donacion = {
-                    "ID": row['id'],
                     "Cedula": row['cedula'],
                     "Nombre": row['nombre'],
                     "Apellido": row['apellido'],
                     "Ciudad": row['ciudad'],
                     "Programa_nombre": programa_nombre,
-                    "Monto": monto  # Posible origen del error
+                    "Monto": monto
                 }
                 donaciones_agrupadas[programa_nombre] = donacion
 
