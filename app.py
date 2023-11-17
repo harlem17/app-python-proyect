@@ -271,7 +271,7 @@ async def mostrar_donaciones():
         monto_total = sum(d['monto'] for d in donaciones_result)
 
         donaciones = [{"ID": row['id'], "Cedula": row['cedula'], "Nombre": row['nombre'], "Apellido": row['apellido'],
-                       "Ciudad": row['ciudad'], "Programa": row['programa'], "Monto": row['monto']} for row in donaciones_result]
+                       "Ciudad": row['ciudad'], "Programa_nomobre": row['programa_nombre'], "Monto": row['monto']} for row in donaciones_result]
 
         await conn.close()
         return JSONResponse(content={"donaciones": donaciones, "monto_total": monto_total}, status_code=200)
@@ -297,7 +297,7 @@ async def buscar_donacion(donacion_id: int):
             "Nombre": result[0]['nombre'],
             "Apellido": result[0]['apellido'],
             "Ciudad": result[0]['ciudad'],
-            "Programa": result[0]['programa_nombre'],
+            "Programa_nombre": result[0]['programa_nombre'],
             "Monto": result[0]['monto']
         }
 
@@ -323,6 +323,7 @@ async def eliminar_donacion(donacion_id: int):
     except Exception as e:
         print(f"Error al eliminar donación: {str(e)}")
         return JSONResponse(content={"error": str(e)}, status_code=500)
+        
 if __name__ == '__main__':
     create_voluntarios_table()  # Crear la tabla de voluntarios al iniciar
     create_programas_table()  # Crear la tabla de programas al iniciar
