@@ -196,6 +196,33 @@ async def mostrar_voluntarios():
     except Exception as e:
         print(f"Error al obtener voluntarios: {str(e)}")
         return JSONResponse(content={"error": str(e)}, status_code=500)
+        
+# Ruta para mostrar todos los programas y los voluntarios que se han unido
+@app.get('/programas', response_class=JSONResponse)
+async def mostrar_programas_con_voluntarios():
+    try:
+        conn = await get_database_conn()
+        query_programas = 'SELECT * FROM programas'
+        programas_result = await conn.fetch(query_programas)
+
+        programas = []
+        for programa_row in programas_result:
+            programa = {"nombre": programa_row['nombre'], "descripcion": programa_row['descripcion']}
+            
+            # Obtener voluntarios asignados al programa desde la tabla de asignaciones
+            query_voluntarios = 'SELECT v.nombre, v.apellido, v.telefono, v.intereses FROM voluntarios v INNER JOIN asignaciones a ON v.id = a.voluntario_id WHERE a.programa_nombre = $1'
+            voluntarios_result = await conn.fetch(query_voluntarios, programa_row['nombre'])
+
+            voluntarios = [{"nombre": v['nombre'], "apellido": v['apellido'], "telefono": v['telefono'], "intereses": v['intereses']} for v in voluntarios_result]
+            programa["voluntarios"] = voluntarios
+
+            programas.append(programa)
+
+        await conn.close()
+        return JSONResponse(content={"programas": programas}, status_code=200)
+    except Exception as e:
+        print(f"Error al obtener programas con voluntarios: {str(e)}")
+        return JSONResponse(content={"error": str(e)}, status_code=500)
 
 # Ruta para mostrar todas las donaciones
 @app.get('/donaciones', response_class=JSONResponse)
