@@ -267,14 +267,36 @@ async def mostrar_donaciones():
         query_donaciones = 'SELECT * FROM donaciones'
         donaciones_result = await conn.fetch(query_donaciones)
 
-        # Calcular el monto total
-        monto_total = sum(d['monto'] for d in donaciones_result)
+        donaciones_agrupadas = {}
+        monto_total = 0
 
-        donaciones = [{"ID": row['id'], "Cedula": row['cedula'], "Nombre": row['nombre'], "Apellido": row['apellido'],
-                       "Ciudad": row['ciudad'], "Programa_nomobre": row['programa_nombre'], "Monto": row['monto']} for row in donaciones_result]
+        for row in donaciones_result:
+            programa_nombre = row['programa_nombre']
+            monto = row['monto']
+
+            # Agregar el monto a la suma total
+            monto_total += monto
+
+            # Si ya existe una donación para el programa, agregar el monto
+            if programa_nombre in donaciones_agrupadas:
+                donaciones_agrupadas[programa_nombre]["monto"] += monto
+            else:
+                # Si no existe, agregar la donación
+                donacion = {
+                    "ID": row['id'],
+                    "Cedula": row['cedula'],
+                    "Nombre": row['nombre'],
+                    "Apellido": row['apellido'],
+                    "Ciudad": row['ciudad'],
+                    "Programa_nombre": programa_nombre,
+                    "Monto": monto
+                }
+                donaciones_agrupadas[programa_nombre] = donacion
 
         await conn.close()
-        return JSONResponse(content={"donaciones": donaciones, "monto_total": monto_total}, status_code=200)
+
+        # Devolver la lista de donaciones agrupadas y el monto total
+        return JSONResponse(content={"donaciones": list(donaciones_agrupadas.values()), "monto_total": monto_total}, status_code=200)
     except Exception as e:
         print(f"Error al obtener donaciones: {str(e)}")
         return JSONResponse(content={"error": str(e)}, status_code=500)
