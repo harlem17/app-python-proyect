@@ -193,7 +193,7 @@ async def mostrar_programas_con_voluntarios():
         
 # Ruta para mostrar todas las donaciones
 @app.get('/donaciones', response_class=JSONResponse)
-async def mostrar_donaciones():
+async def mostrar_donaciones_agrupadas():
     try:
         conn = await get_database_conn()
         query_donaciones = 'SELECT * FROM donaciones'
@@ -204,7 +204,7 @@ async def mostrar_donaciones():
 
         for row in donaciones_result:
             programa_nombre = row['programa_nombre']
-            monto = row['monto']
+            monto = row['monto']  # Posible origen del error
 
             # Agregar el monto a la suma total
             monto_total += monto
@@ -221,7 +221,7 @@ async def mostrar_donaciones():
                     "Apellido": row['apellido'],
                     "Ciudad": row['ciudad'],
                     "Programa_nombre": programa_nombre,
-                    "Monto": monto
+                    "Monto": monto  # Posible origen del error
                 }
                 donaciones_agrupadas[programa_nombre] = donacion
 
