@@ -191,45 +191,23 @@ async def mostrar_programas_con_voluntarios():
         print(f"Error al obtener programas con voluntarios: {str(e)}")
         return JSONResponse(content={"error": str(e)}, status_code=500)
         
-# Ruta para mostrar todas las donaciones consolidadas por programa
+# Ruta para mostrar todas las donaciones
 @app.get('/donaciones', response_class=JSONResponse)
-async def mostrar_donaciones_agrupadas():
+async def mostrar_donaciones():
     try:
         conn = await get_database_conn()
         query_donaciones = 'SELECT * FROM donaciones'
         donaciones_result = await conn.fetch(query_donaciones)
 
-        donaciones_agrupadas = {}
-        monto_total = 0
+        # Calcular el monto total
+        monto_total = sum(d['monto'] for d in donaciones_result)
 
-        for row in donaciones_result:
-            try:
-                programa_nombre = row['programa_nombre']
-                monto = row['monto']
-            except KeyError as e:
-                print(f"Error: Clave faltante '{e}' en la fila: {row}")
-                continue
-
-            monto_total += monto
-
-            if programa_nombre in donaciones_agrupadas:
-                donaciones_agrupadas[programa_nombre]["monto"] += monto
-            else:
-                donacion = {
-                    "ID": row['id'],
-                    "Cedula": row.get('cedula', ''),
-                    "Nombre": row.get('nombre', ''),
-                    "Apellido": row.get('apellido', ''),
-                    "Ciudad": row.get('ciudad', ''),
-                    "Programa_nombre": programa_nombre,
-                    "Monto": monto
-                }
-                donaciones_agrupadas[programa_nombre] = donacion
+        donaciones = [{"ID": row['id'], "Cedula": row['cedula'], "Nombre": row['nombre'], "Apellido": row['apellido'],
+                       "Ciudad": row['ciudad'], "Programa_nomobre": row['programa_nombre'], "Monto": row['monto']} for row in donaciones_result]
 
         await conn.close()
-
-        return JSONResponse(content={"donaciones": list(donaciones_agrupadas.values()), "monto_total": monto_total}, status_code=200)
-    except asyncpg.exceptions.UndefinedColumnError as e:
+        return JSONResponse(content={"donaciones": donaciones, "monto_total": monto_total}, status_code=200)
+    except Exception as e:
         print(f"Error al obtener donaciones: {str(e)}")
         return JSONResponse(content={"error": str(e)}, status_code=500)
         
