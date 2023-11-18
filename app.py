@@ -204,7 +204,7 @@ async def mostrar_donaciones_agrupadas():
 
         for row in donaciones_result:
             programa_nombre = row['programa_nombre']
-            monto = row.get('monto', 0)
+            monto = row['monto']
 
             # Agregar el monto a la suma total
             monto_total += monto
