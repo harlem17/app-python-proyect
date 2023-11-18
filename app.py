@@ -203,22 +203,24 @@ async def mostrar_donaciones_agrupadas():
         monto_total = 0
 
         for row in donaciones_result:
-            programa_nombre = row['programa_nombre']
-            monto = row['monto']
+            try:
+                programa_nombre = row['programa_nombre']
+                monto = row['monto']
+            except KeyError as e:
+                print(f"Error: Clave faltante '{e}' en la fila: {row}")
+                continue
 
-            # Agregar el monto a la suma total
             monto_total += monto
 
-            # Si ya existe una donación para el programa, agregar el monto
             if programa_nombre in donaciones_agrupadas:
                 donaciones_agrupadas[programa_nombre]["monto"] += monto
             else:
-                # Si no existe, agregar la donación
                 donacion = {
-                    "Cedula": row['cedula'],
-                    "Nombre": row['nombre'],
-                    "Apellido": row['apellido'],
-                    "Ciudad": row['ciudad'],
+                    "ID": row['id'],
+                    "Cedula": row.get('cedula', ''),
+                    "Nombre": row.get('nombre', ''),
+                    "Apellido": row.get('apellido', ''),
+                    "Ciudad": row.get('ciudad', ''),
                     "Programa_nombre": programa_nombre,
                     "Monto": monto
                 }
@@ -226,9 +228,8 @@ async def mostrar_donaciones_agrupadas():
 
         await conn.close()
 
-        # Devolver la lista de donaciones agrupadas y el monto total
         return JSONResponse(content={"donaciones": list(donaciones_agrupadas.values()), "monto_total": monto_total}, status_code=200)
-    except Exception as e:
+    except asyncpg.exceptions.UndefinedColumnError as e:
         print(f"Error al obtener donaciones: {str(e)}")
         return JSONResponse(content={"error": str(e)}, status_code=500)
         
