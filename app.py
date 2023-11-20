@@ -87,9 +87,9 @@ async def index(request: Request):
     print('Request for index page received')
     return templates.TemplateResponse('Home.html', {"request": request})
 
-# Ruta para crear un voluntario
+ Ruta para crear un voluntario
 @app.post('/create-voluntario', response_class=JSONResponse)
-async def add_voluntario(ID: int = Form(...), Nombre: str = Form(...), Apellido: str = Form(...), Telefono: int = Form(...), Intereses: str = Form(...)):
+async def add_voluntario(ID: int = Form(...), Nombre: str = Form(...), Apellido: str = Form(...), Telefono: str = Form(...), Intereses: str = Form(...)):
     try:
         conn = await get_database_conn()
         query = 'INSERT INTO voluntarios (id, nombre, apellido, telefono, intereses) VALUES ($1, $2, $3, $4, $5)'
