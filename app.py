@@ -89,7 +89,13 @@ async def index(request: Request):
 
 # Ruta para crear un voluntario
 @app.post('/create-voluntario', response_class=JSONResponse)
-async def add_voluntario(ID: int = Form(...), Nombre: str = Form(...), Apellido: str = Form(...), Telefono: str = Form(...), Intereses: str = Form(...)):
+async def add_voluntario(
+    ID: int = Form(...),
+    Nombre: str = Form(...),
+    Apellido: str = Form(...),
+    Telefono: int = Form(...),  # Cambiado a int
+    Intereses: str = Form(...),
+):
     try:
         conn = await get_database_conn()
         query = 'INSERT INTO voluntarios (id, nombre, apellido, telefono, intereses) VALUES ($1, $2, $3, $4, $5)'
