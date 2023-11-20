@@ -87,7 +87,7 @@ async def index(request: Request):
     print('Request for index page received')
     return templates.TemplateResponse('Home.html', {"request": request})
 
- Ruta para crear un voluntario
+# Ruta para crear un voluntario
 @app.post('/create-voluntario', response_class=JSONResponse)
 async def add_voluntario(ID: int = Form(...), Nombre: str = Form(...), Apellido: str = Form(...), Telefono: str = Form(...), Intereses: str = Form(...)):
     try:
@@ -100,7 +100,7 @@ async def add_voluntario(ID: int = Form(...), Nombre: str = Form(...), Apellido:
     except Exception as e:
         print(f"Error al agregar voluntario: {str(e)}")
         return JSONResponse(content={"error": str(e)}, status_code=500)
-        
+
 # Ruta para registrar un programa
 @app.post('/create-programa', response_class=JSONResponse)
 async def add_programa(nombre: str = Form(...), descripcion: str = Form(...)):
@@ -307,7 +307,7 @@ async def buscar_donacion(donacion_id: int):
         if not result:
             await conn.close()
             return JSONResponse(content={"error": "Donación no encontrada"}, status_code=404)
-
+            
         donacion = {
             "ID": result[0]['id'],
             "Cedula": result[0]['cedula'],
