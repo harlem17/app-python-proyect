@@ -256,6 +256,15 @@ async def mostrar_donaciones():
 async def delete_voluntario(ID: int = Form(...)):
     try:
         conn = await get_database_conn()
+        
+        # Verificar si el voluntario existe antes de intentar eliminarlo
+        query_voluntario = 'SELECT * FROM voluntarios WHERE id = $1'
+        voluntario = await conn.fetch(query_voluntario, ID)
+
+        if not voluntario:
+            await conn.close()
+            raise HTTPException(status_code=404, detail="Voluntario no encontrado")
+
         query = 'DELETE FROM voluntarios WHERE id = $1'
         await conn.execute(query, ID)
         await conn.close()
@@ -270,6 +279,14 @@ async def delete_voluntario(ID: int = Form(...)):
 async def delete_programa(Nombre: str = Form(...)):
     try:
         conn = await get_database_conn()
+
+        # Verificar si el programa existe antes de intentar eliminarlo
+        query_programa = 'SELECT * FROM programas WHERE nombre = $1'
+        programa = await conn.fetch(query_programa, Nombre)
+
+        if not programa:
+            await conn.close()
+            raise HTTPException(status_code=404, detail="Programa no encontrado")
 
         # Eliminar asignaciones del programa en la tabla de asignaciones
         query_delete_asignaciones = 'DELETE FROM asignaciones WHERE programa_nombre = $1'
@@ -291,6 +308,14 @@ async def delete_programa(Nombre: str = Form(...)):
 async def eliminar_donacion(donacion_id: int):
     try:
         conn = await get_database_conn()
+
+        # Verificar si la donación existe antes de intentar eliminarla
+        query_donacion = 'SELECT * FROM donaciones WHERE id = $1'
+        donacion = await conn.fetch(query_donacion, donacion_id)
+
+        if not donacion:
+            await conn.close()
+            raise HTTPException(status_code=404, detail="Donación no encontrada")
 
         # Eliminar la donación
         query = 'DELETE FROM donaciones WHERE id = $1'
