@@ -236,7 +236,7 @@ async def mostrar_donaciones():
         monto_total = sum(d['monto'] for d in donaciones_result)
 
         donaciones = [{"ID": row['id'], "Cedula": row['cedula'], "Nombre": row['nombre'], "Apellido": row['apellido'],
-                       "Ciudad": row['ciudad'], "Programa_nomobre": row['programa_nombre'], "Monto": row['monto']} for row in donaciones_result]
+                       "Ciudad": row['ciudad'], "Programa_nombre": row['programa_nombre'], "Monto": row['monto']} for row in donaciones_result]
 
         await conn.close()
         return JSONResponse(content={"donaciones": donaciones, "monto_total": monto_total}, status_code=200)
