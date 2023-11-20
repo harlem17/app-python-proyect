@@ -273,6 +273,8 @@ async def unirse_programa(nombre_programa: str = Form(...), voluntario_id: int =
         query_programa = 'SELECT * FROM programas WHERE nombre = $1'
         programa = await conn.fetch(query_programa, nombre_programa)
 
+        print(f"Programa: {programa}")
+
         if not programa:
             await conn.close()
             return JSONResponse(content={"error": "Programa no encontrado"}, status_code=404)
@@ -280,6 +282,8 @@ async def unirse_programa(nombre_programa: str = Form(...), voluntario_id: int =
         # Verificar si el voluntario existe
         query_voluntario = 'SELECT * FROM voluntarios WHERE id = $1'
         voluntario = await conn.fetch(query_voluntario, voluntario_id)
+
+        print(f"Voluntario: {voluntario}")
 
         if not voluntario:
             await conn.close()
