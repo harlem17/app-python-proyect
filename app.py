@@ -115,39 +115,37 @@ async def add_programa(nombre: str = Form(...), descripcion: str = Form(...)):
         print(f"Error al agregar programa: {str(e)}")
         return JSONResponse(content={"error": str(e)}, status_code=500)
         
-# Ruta para registrar donaciones
-@app.post('/registrar-donacion', response_class=JSONResponse)
-async def registrar_donacion(
-    Cedula: str = Form(...),
-    NombreDonante: str = Form(...),
-    ApellidoDonante: str = Form(...),
-    CiudadResidencia: str = Form(...),
-    ProgramaDonacion: str = Form(...),
-    MontoDonacion: float = Form(...),
-):
+# Ruta para que los voluntarios se unan a un programa
+@app.post('/unirse-programa', response_class=JSONResponse)
+async def unirse_programa(nombre_programa: str = Form(...), voluntario_id: int = Form(...)):
     try:
         conn = await get_database_conn()
 
         # Verificar si el programa existe
         query_programa = 'SELECT * FROM programas WHERE nombre = $1'
-        programa_result = await conn.fetchrow(query_programa, ProgramaDonacion)
+        programa = await conn.fetch(query_programa, nombre_programa)
 
-        if not programa_result:
+        if not programa:
             await conn.close()
             return JSONResponse(content={"error": "Programa no encontrado"}, status_code=404)
 
-        # Insertar la donación en la tabla de donaciones
-        query = '''
-            INSERT INTO donaciones (cedula, nombre, apellido, ciudad, programa_nombre, monto)
-            VALUES ($1, $2, $3, $4, $5, $6)
-        '''
-        await conn.execute(query, Cedula, NombreDonante, ApellidoDonante, CiudadResidencia, ProgramaDonacion, MontoDonacion)
+        # Verificar si el voluntario existe
+        query_voluntario = 'SELECT * FROM voluntarios WHERE id = $1'
+        voluntario = await conn.fetch(query_voluntario, voluntario_id)
+
+        if not voluntario:
+            await conn.close()
+            return JSONResponse(content={"error": "Voluntario no encontrado"}, status_code=404)
+
+        # Agregar la asignación a la tabla de asignaciones
+        query = 'INSERT INTO asignaciones (programa_nombre, voluntario_id) VALUES ($1, $2)'
+        await conn.execute(query, nombre_programa, voluntario_id)
         await conn.close()
 
-        print("Donación registrada con éxito")
-        return JSONResponse(content={"mensaje": "Donación registrada con éxito"}, status_code=200)
+        print("Voluntario asignado al programa con éxito")
+        return JSONResponse(content={"mensaje": "Voluntario asignado al programa con éxito"}, status_code=200)
     except Exception as e:
-        print(f"Error al registrar donación: {str(e)}")
+        print(f"Error al unirse a un programa: {str(e)}")
         return JSONResponse(content={"error": str(e)}, status_code=500)
         
 # Ruta para mostrar todos los voluntarios
