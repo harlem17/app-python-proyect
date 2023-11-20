@@ -130,9 +130,9 @@ async def registrar_donacion(
 
         # Verificar si el programa existe
         query_programa = 'SELECT * FROM programas WHERE nombre = $1'
-        programa = await conn.fetch(query_programa, ProgramaDonacion)
+        programa_result = await conn.fetchrow(query_programa, ProgramaDonacion)
 
-        if not programa:
+        if not programa_result:
             await conn.close()
             return JSONResponse(content={"error": "Programa no encontrado"}, status_code=404)
 
@@ -149,7 +149,7 @@ async def registrar_donacion(
     except Exception as e:
         print(f"Error al registrar donación: {str(e)}")
         return JSONResponse(content={"error": str(e)}, status_code=500)
-
+        
 # Ruta para mostrar todos los voluntarios
 @app.get('/voluntarios', response_class=JSONResponse)
 async def mostrar_voluntarios():
